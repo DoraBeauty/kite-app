@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>風箏選股交易紀錄系統 (Cloud v1.3 Popup Fix)</title>
+    <title>風箏選股交易紀錄系統 (Cloud v1.3 Strategy Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -201,6 +202,7 @@
         </div>
 
         <div id="page-portfolio" class="hidden space-y-5 animate-in"><div id="portfolio-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div></div>
+        
         <div id="page-history" class="hidden space-y-5 animate-in"><div id="history-stats" class="grid grid-cols-2 gap-4"></div><div id="history-list" class="space-y-4 pb-20"></div></div>
         
         <div id="page-strategy" class="hidden space-y-6 animate-in pb-20">
@@ -255,7 +257,7 @@
             <div class="flex gap-3"><button onclick="confirmAction()" class="flex-1 bg-red-500 text-white font-black py-3.5 rounded-2xl text-sm btn-press">確認</button><button onclick="closeConfirmModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl text-sm btn-press">取消</button></div>
         </div>
     </div>
-
+    
     <div id="detailsModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[250]" onclick="closeDetailsModal()">
         <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-y-auto no-scrollbar" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4 pb-4 border-b dark:border-slate-800">
@@ -374,12 +376,10 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 2. Your Config
         const firebaseConfig = {
             apiKey: "AIzaSyB4BuO5gvNfkHYYp48FvwYhK-VXpnb7NSg",
             authDomain: "stock-app-4e8cd.firebaseapp.com",
@@ -389,32 +389,25 @@
             appId: "1:755625283902:web:8789da17765e35e5e2dc6f"
         };
 
-        // 3. Initialize
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // 4. Global State
         let currentUser = null;
         let trades = [];
         let unsubscribe = null;
+        let chartInstance = null; // Store chart instance
         
         window.trades = trades;
 
-        // --- AUTH: SWITCHED TO POPUP FOR MOBILE STABILITY ---
         window.handleGoogleLogin = async () => {
             const btn = document.getElementById('btn-google');
             const originalText = btn.innerHTML;
-            
             btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> 登入中...`;
             lucide.createIcons();
-            
             try {
-                // 使用 Popup 替代 Redirect，避免手機頁面重整遺失狀態
                 const result = await signInWithPopup(auth, provider);
-                console.log("登入成功 User:", result.user);
-                // 成功後 onAuthStateChanged 會自動處理 UI
             } catch (error) {
                 console.error("Login Failed:", error);
                 alert("登入失敗: " + error.message);
@@ -445,7 +438,6 @@
             }
         });
 
-        // --- DATABASE SYNC ---
         function subscribeToTrades(userId) {
             const q = query(collection(db, "users", userId, "trades"), orderBy("createdAt", "desc"));
             unsubscribe = onSnapshot(q, (snapshot) => {
@@ -456,10 +448,8 @@
             });
         }
 
-        // --- CRUD ACTIONS ---
         window.handleTradeSubmit = async () => {
             if(!currentUser) return alert("請先登入");
-            
             const idx = document.getElementById('subStrategyInput').value;
             const price = parseFloat(document.getElementById('entryPrice').value);
             const qty = parseInt(document.getElementById('quantity').value);
@@ -486,7 +476,6 @@
             const btn = document.querySelector('#tradeForm button');
             const oldText = btn.innerHTML;
             btn.innerHTML = '儲存中...';
-            
             try {
                 await addDoc(collection(db, "users", currentUser.uid, "trades"), newTrade);
                 document.getElementById('tradeForm').reset();
@@ -509,19 +498,12 @@
             const price = parseFloat(document.getElementById('addPosPrice').value);
             const qty = parseInt(document.getElementById('addPosQty').value);
             const t = trades.find(item => item.id === window.tradeToAddId);
-            
             if (t && price && qty) {
                 const oldTotalVal = t.averagePrice * t.totalQuantity;
                 const newTotalQty = t.totalQuantity + qty;
                 const newAvg = (oldTotalVal + (price * qty)) / newTotalQty;
-                
                 const newHistory = [...t.history, { type: 'buy', date: document.getElementById('addPosDate').value, price, quantity: qty, wind: '加碼', note: document.getElementById('addPosNote').value, timestamp: Date.now() }];
-                
-                await updateDoc(doc(db, "users", currentUser.uid, "trades", t.id), {
-                    totalQuantity: newTotalQty,
-                    averagePrice: newAvg,
-                    history: newHistory
-                });
+                await updateDoc(doc(db, "users", currentUser.uid, "trades", t.id), { totalQuantity: newTotalQty, averagePrice: newAvg, history: newHistory });
                 closeAddPositionModal();
             }
         };
@@ -531,23 +513,16 @@
              const price = parseFloat(document.getElementById('sellPrice').value);
              const qty = parseInt(document.getElementById('sellQty').value);
              const t = trades.find(item => item.id === window.tradeToSellId);
-             
              if (t && price && qty) {
                 const newQty = t.totalQuantity - qty;
                 const newHistory = [...t.history, { type: 'sell', date: document.getElementById('sellDate').value, price, quantity: qty, wind: document.getElementById('exitWindInput').value, note: document.getElementById('sellNote').value, timestamp: Date.now() }];
-                
-                const updateData = {
-                    totalQuantity: newQty,
-                    history: newHistory
-                };
-                
+                const updateData = { totalQuantity: newQty, history: newHistory };
                 if (newQty <= 0) {
                     updateData.status = 'closed';
                     updateData.exitPrice = price;
                     updateData.exitDate = document.getElementById('sellDate').value;
                     updateData.exitWind = document.getElementById('exitWindInput').value;
                 }
-                
                 await updateDoc(doc(db, "users", currentUser.uid, "trades", t.id), updateData);
                 closeModal();
                 if(newQty <= 0) switchTab('history');
@@ -561,7 +536,6 @@
             closeConfirmModal();
         };
 
-        // --- UI Logic ---
         window.currentPersona = '';
         window.tradeToSellId = null;
         window.tradeToAddId = null;
@@ -569,7 +543,17 @@
         window.filterDates = { start: null, end: null };
         window.tempScreenshot = null;
         
-        window.switchTab = (t) => { ['add','portfolio','history','strategy'].forEach(p=>{ document.getElementById(`page-${p}`).classList.add('hidden'); document.getElementById(`tab-${p}`).classList.remove('active'); }); document.getElementById(`page-${t}`).classList.remove('hidden'); document.getElementById(`tab-${t}`).classList.add('active'); if(t==='strategy')renderStrategyPage(); window.scrollTo(0,0); };
+        window.switchTab = (t) => { 
+            ['add','portfolio','history','strategy'].forEach(p=>{ 
+                document.getElementById(`page-${p}`).classList.add('hidden'); 
+                document.getElementById(`tab-${p}`).classList.remove('active'); 
+            }); 
+            document.getElementById(`page-${t}`).classList.remove('hidden'); 
+            document.getElementById(`tab-${t}`).classList.add('active'); 
+            if(t==='strategy') renderStrategyPage(); // Fix: Call corrected function
+            window.scrollTo(0,0); 
+        };
+        
         window.toggleUserMenu = () => document.getElementById('user-menu').classList.toggle('hidden');
         window.toggleThemeMenu = () => document.getElementById('theme-menu').classList.toggle('hidden');
         window.setTheme = (m) => { const h=document.documentElement; if(m==='dark'){h.classList.add('dark');localStorage.setItem('kite_theme','dark');}else if(m==='light'){h.classList.remove('dark');localStorage.setItem('kite_theme','light');}else{localStorage.removeItem('kite_theme');if(window.matchMedia('(prefers-color-scheme: dark)').matches)h.classList.add('dark');else h.classList.remove('dark');} document.getElementById('theme-menu').classList.add('hidden'); updateThemeIcons(); };
@@ -606,11 +590,173 @@
         window.viewDetails = (id) => { const t=trades.find(item=>item.id===id); if(!t)return; document.getElementById('detail-title').textContent=`${t.symbolCode} ${t.symbolName}`; document.getElementById('detail-subtitle').textContent=`均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`; const list=document.getElementById('detail-list'); let currentCost=0, currentQty=0, avgPrice=0; const sortedHistory=[...t.history].sort((a,b)=>a.timestamp-b.timestamp); const htmlItems=sortedHistory.map(h=>{ let pnlDisplay=''; if(h.type==='buy'){ currentCost+=h.price*h.quantity; currentQty+=h.quantity; avgPrice=currentCost/currentQty; }else if(h.type==='sell'){ let cost=avgPrice*h.quantity; let realizedPnL=(h.price-avgPrice)*h.quantity; let pct=cost>0?((realizedPnL/cost)*100).toFixed(1):0; const pnlClass=realizedPnL>=0?'text-red-500':'text-green-600'; pnlDisplay=`<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>損益: ${realizedPnL>=0?'+':''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`; currentCost-=avgPrice*h.quantity; currentQty-=h.quantity; } return `<div class="p-4 rounded-2xl border ${h.type==='buy'?'bg-indigo-50/50 border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30':'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${h.type==='buy'?'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300':'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'}">${h.type==='buy'?'買進':'賣出'}</span><span class="text-[10px] text-slate-400 font-bold">${h.date}</span></div><div class="flex justify-between items-center"><span class="text-sm font-black text-slate-700 dark:text-slate-200">${h.quantity}股 @ $${h.price}</span><span class="text-[10px] font-bold text-slate-400">${h.wind||'-'}</span></div>${h.note?`<p class="text-[10px] text-slate-500 mt-2 leading-relaxed">${h.note}</p>`:''} ${pnlDisplay}</div>`; }); list.innerHTML=htmlItems.reverse().join(''); document.getElementById('detailsModal').classList.remove('hidden'); };
         window.closeDetailsModal = () => document.getElementById('detailsModal').classList.add('hidden');
 
-        // Render Functions
+        // --- NEW: STRATEGY & CHART LOGIC ---
+        window.renderStrategyPage = () => {
+            const closedTrades = trades.filter(t => t.status === 'closed');
+            
+            // 1. Calculate Stats
+            const personaStats = { freelancer: 0, office: 0, boss: 0 };
+            const windStats = { 強風: 0, 亂流: 0, 陣風: 0, 無風: 0 };
+            const comboStats = {};
+            
+            closedTrades.forEach(t => {
+                let pnl = 0;
+                let exitWind = t.exitWind || '無風';
+                t.history.forEach(h => { if(h.type === 'sell') pnl += (h.price - t.averagePrice) * h.quantity; });
+                
+                if (personaStats[t.persona] !== undefined) personaStats[t.persona] += pnl;
+                if (windStats[exitWind] !== undefined) windStats[exitWind] += pnl;
+                
+                const comboKey = `${t.persona}-${exitWind}`;
+                if (!comboStats[comboKey]) comboStats[comboKey] = 0;
+                comboStats[comboKey] += pnl;
+            });
+
+            // 2. Find MVP & Worst
+            const bestPersona = Object.entries(personaStats).reduce((a, b) => a[1] > b[1] ? a : b, ['無', -Infinity]);
+            const bestWind = Object.entries(windStats).reduce((a, b) => a[1] > b[1] ? a : b, ['無', -Infinity]);
+            const worstCombo = Object.entries(comboStats).reduce((a, b) => a[1] < b[1] ? a : b, ['無', Infinity]);
+            
+            const personaTitles = { freelancer: '打工型', office: '上班族', boss: '老闆型', '無': '尚未交易' };
+
+            document.getElementById('best-persona').textContent = personaTitles[bestPersona[0]] || '尚未交易';
+            document.getElementById('best-wind').textContent = bestWind[0] || '無';
+            
+            if (worstCombo[0] !== '無' && worstCombo[1] < 0) {
+                const [p, w] = worstCombo[0].split('-');
+                document.getElementById('worst-combo').textContent = `${personaTitles[p]} + ${w}`;
+                document.getElementById('worst-combo-desc').textContent = `此組合虧損達 $${Math.abs(Math.round(worstCombo[1])).toLocaleString()}，建議避免。`;
+            } else {
+                document.getElementById('worst-combo').textContent = "表現優良";
+                document.getElementById('worst-combo-desc').textContent = "暫無顯著虧損組合。";
+            }
+
+            // 3. Render Matrix
+            renderStrategyMatrix(closedTrades);
+
+            // 4. Render Chart
+            renderEquityChart();
+        };
+
+        function renderStrategyMatrix(closedTrades) {
+            const matrix = document.getElementById('strategy-matrix');
+            const winds = ['強風', '亂流', '陣風', '無風'];
+            const personasList = ['freelancer', 'office', 'boss'];
+            
+            // Header Row
+            let html = `<div class="bg-transparent"></div>`;
+            winds.forEach(w => html += `<div class="text-[10px] text-center font-black text-slate-400 uppercase tracking-widest py-2">${w}</div>`);
+            
+            personasList.forEach(p => {
+                // Row Header
+                html += `<div class="flex items-center justify-center"><div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs" style="background-color: ${personas[p].color}"><i data-lucide="${getPersonaIcon(p)}" class="w-4 h-4"></i></div></div>`;
+                
+                winds.forEach(w => {
+                    // Calc Cell Data
+                    const tradesInCell = closedTrades.filter(t => t.persona === p && t.exitWind === w);
+                    let cellPnl = 0;
+                    let winCount = 0;
+                    tradesInCell.forEach(t => {
+                        let pnl = 0;
+                        t.history.forEach(h => { if(h.type === 'sell') pnl += (h.price - t.averagePrice) * h.quantity; });
+                        cellPnl += pnl;
+                        if(pnl > 0) winCount++;
+                    });
+                    
+                    const winRate = tradesInCell.length > 0 ? Math.round((winCount / tradesInCell.length) * 100) : 0;
+                    const bgClass = cellPnl > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300' : (cellPnl < 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300');
+                    
+                    html += `
+                        <div class="matrix-cell ${bgClass} rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
+                            <span class="text-[10px] font-bold">${winRate}%</span>
+                            <span class="text-xs font-black">${formatLargeNumber(cellPnl)}</span>
+                        </div>
+                    `;
+                });
+            });
+            
+            matrix.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function getPersonaIcon(p) {
+            if(p === 'freelancer') return 'zap';
+            if(p === 'office') return 'briefcase';
+            return 'crown';
+        }
+
+        function renderEquityChart() {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            // Prepare Data sorted by date
+            const allHistory = [];
+            trades.forEach(t => {
+                t.history.forEach(h => {
+                    if (h.type === 'sell') {
+                        const pnl = (h.price - t.averagePrice) * h.quantity;
+                        allHistory.push({ date: h.date, pnl: pnl });
+                    }
+                });
+            });
+            
+            allHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            let accumulated = 0;
+            const labels = [];
+            const dataPoints = [];
+            
+            allHistory.forEach(h => {
+                accumulated += h.pnl;
+                labels.push(h.date.substring(5)); // MM-DD
+                dataPoints.push(accumulated);
+            });
+            
+            // If no data, show empty chart baseline
+            if (dataPoints.length === 0) { labels.push('Start'); dataPoints.push(0); }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '累計損益',
+                        data: dataPoints,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 6 } },
+                        y: { grid: { color: gridColor, borderDash: [4, 4] }, ticks: { color: textColor, callback: function(value) { return '$' + formatLargeNumber(value); } } }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        }
+
         const personas={freelancer:{title:'打工型',color:'#3b82f6',options:[{name:'強勢日(追漲)',summary:'10:00後。買紅追漲。週MACD向上。',sl:'3日內未脫離成本或虧損5%。',tp:'獲利10%+，破5/10日線。'},{name:'日拉回(低吸)',summary:'拉回5日線進場。分批。',sl:'3~5天沒攻勢或破5日線。',tp:'獲利10%+，且跌破5日/10日線。'}]},office:{title:'上班族',color:'#6366f1',options:[{name:'強勢週(趨勢)',summary:'11:30後。日MACD剛翻多。',sl:'買進4日內未脫離成本。',tp:'獲利10%+，破5/10日線。'},{name:'週趨勢(拉回)',summary:'週MACD剛翻多。拉回買。',sl:'週五收盤低於上週五。',tp:'獲利10%+，週MACD縮短。'}]},boss:{title:'老闆型',color:'#a855f7',options:[{name:'週拉回(分批)',summary:'營收YoY>30%。月線分批。',sl:'月MACD縮短。營收轉負。',tp:'週K站不回5週線。'},{name:'廉價收購(價值)',summary:'回檔至季線。大資金分批。',sl:'金流撤退(月MACD縮)。',tp:'週K站不回5週線。'}]}};
         const windColors={'強風':'bg-red-500','亂流':'bg-amber-500','陣風':'bg-blue-500','無風':'bg-slate-400'};
         function formatLargeNumber(n){const a=Math.abs(n);if(a>=1000000000000)return(a/1000000000000).toFixed(2)+'兆';if(a>=100000000)return(a/100000000).toFixed(2)+'億';if(a>=10000)return(a/10000).toFixed(1)+'萬';return Math.round(a).toLocaleString();}
 
+        // Initialize UI
+        setTheme(localStorage.getItem('kite_theme')||'system');
+        lucide.createIcons();
+
+        // Render Functions for Portfolio & History
         window.renderPortfolio = () => {
             const list=document.getElementById('portfolio-list'); const openTrades=trades.filter(t=>t.status==='open').sort((a,b)=>b.createdAt-a.createdAt);
             if(openTrades.length===0){ list.innerHTML=`<div class="col-span-full text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">無持倉</div>`;return;}
@@ -640,9 +786,6 @@
             if(window.filterDates.start){document.getElementById('filter-active-range').classList.remove('hidden');document.getElementById('filter-all-label').classList.add('hidden');}else{document.getElementById('filter-active-range').classList.add('hidden');document.getElementById('filter-all-label').classList.remove('hidden');}
         };
 
-        // Initialize UI
-        setTheme(localStorage.getItem('kite_theme')||'system');
-        lucide.createIcons();
     </script>
 </body>
 </html>
