@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>風箏選股交易紀錄系統 (Cloud v1.0)</title>
+    <title>風箏選股交易紀錄系統 (Cloud v1.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -374,9 +374,9 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase SDKs
+        // 1. Import Firebase SDKs (UPDATED: Added signInWithRedirect)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 2. Your Config
@@ -403,17 +403,18 @@
         // Expose functions to window for HTML buttons
         window.trades = trades; // Debug
         
-        // --- AUTH ---
+        // --- AUTH (UPDATED: Uses Redirect for Mobile) ---
         window.handleGoogleLogin = async () => {
             const btn = document.getElementById('btn-google');
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> 跳轉中...`;
             lucide.createIcons();
             try {
-                await signInWithPopup(auth, provider);
+                // Change: Use Redirect instead of Popup for better mobile support
+                await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error(error);
                 alert("登入失敗: " + error.message);
-                btn.innerHTML = `Google 登入重試`;
+                btn.innerHTML = `Google 帳號登入`;
             }
         };
 
@@ -643,4 +644,3 @@
     </script>
 </body>
 </html>
-
