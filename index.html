@@ -206,7 +206,7 @@
 
         <div id="page-portfolio" class="hidden space-y-5 animate-in"><div id="portfolio-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div></div>
         
-        <div id="page-history" class="hidden space-y-5 animate-in"><div id="history-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div><div id="history-list" class="space-y-4 pb-20"></div></div>
+        <div id="page-history" class="hidden space-y-5 animate-in"><div id="history-list" class="space-y-4 pb-20"></div></div>
         
         <div id="page-strategy" class="hidden space-y-6 animate-in pb-20">
             <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
@@ -1375,22 +1375,6 @@
                 if(pnl > 0) winCount++;
             });
 
-            if (stats) {
-                stats.innerHTML = `
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">總損益</p>
-                        <p class="text-2xl font-black ${totalPnL >= 0 ? 'text-red-500' : 'text-green-600'}">${totalPnL >= 0 ? '+' : ''}$${formatLargeNumber(totalPnL)}</p>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">勝率</p>
-                        <p class="text-2xl font-black">${closedTrades.length > 0 ? ((winCount / closedTrades.length) * 100).toFixed(0) : 0}%</p>
-                    </div>
-                    <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-3xl shadow-sm border border-amber-100 dark:border-amber-900/30">
-                        <p class="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase mb-1">總手續費</p>
-                        <p class="text-2xl font-black text-amber-600 dark:text-amber-400">$${formatLargeNumber(totalFeesAll)}</p>
-                    </div>
-                `;
-            }
 
             list.innerHTML = closedTrades.map(t => {
                 let totalPnL = 0;
