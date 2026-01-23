@@ -378,25 +378,60 @@
     <div id="personaHelpModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[300]">
         <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] max-w-3xl w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-hidden">
             <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
-                <h3 class="text-xl font-black">策略分支手冊</h3><button onclick="hidePersonaHelp()" class="text-slate-300 hover:text-indigo-500 p-2 -mr-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <h3 class="text-xl font-black">KITE 策略分支手冊</h3>
+                <button onclick="hidePersonaHelp()" class="text-slate-300 hover:text-indigo-500 p-2 -mr-2"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="overflow-y-auto p-6 pt-4 space-y-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 pb-safe">
-                <details class="group bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/20" open>
-                    <summary class="flex items-center justify-between font-black text-blue-600 cursor-pointer"><span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> 打工型 (日級別)</span><i data-lucide="chevron-down" class="w-4 h-4 text-blue-400 transition-transform group-open:rotate-180"></i></summary>
-                    <div class="mt-4 space-y-4"><div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><h5 class="font-black text-slate-800 dark:text-white mb-2">強勢日 (追漲)</h5><ul class="list-disc pl-4 space-y-1 text-xs text-slate-500 dark:text-slate-400"><li><strong>時機：</strong>10:00後觀察，確認強風/陣風。</li><li><strong>選股：</strong>營收/成交值強勢。</li><li><strong>停損：</strong>3日內未脫離成本(-1~2%)或虧損達5%。</li></ul></div><div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><h5 class="font-black text-slate-800 dark:text-white mb-2">日拉回 (低吸)</h5><ul class="list-disc pl-4 space-y-1 text-xs text-slate-500 dark:text-slate-400"><li><strong>時機：</strong>易漲循環。回測5日線。</li><li><strong>停損：</strong>3~5天未發動攻勢。</li></ul></div></div>
-                </details>
-                <details class="group bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/20">
-                    <summary class="flex items-center justify-between font-black text-indigo-600 cursor-pointer"><span class="flex items-center gap-2"><i data-lucide="briefcase" class="w-4 h-4"></i> 上班族 (週級別)</span><i data-lucide="chevron-down" class="w-4 h-4 text-indigo-400 transition-transform group-open:rotate-180"></i></summary>
-                    <div class="mt-4 space-y-4"><div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><h5 class="font-black text-slate-800 dark:text-white mb-2">強勢週 (趨勢)</h5><ul class="list-disc pl-4 space-y-1 text-xs text-slate-500 dark:text-slate-400"><li><strong>時機：</strong>11:30後。日MACD剛翻多。</li></ul></div></div>
-                </details>
-                <details class="group bg-purple-50/50 dark:bg-purple-900/10 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/20">
-                    <summary class="flex items-center justify-between font-black text-purple-600 cursor-pointer"><span class="flex items-center gap-2"><i data-lucide="crown" class="w-4 h-4"></i> 老闆型 (月級別)</span><i data-lucide="chevron-down" class="w-4 h-4 text-purple-400 transition-transform group-open:rotate-180"></i></summary>
-                     <div class="mt-4 space-y-4"><div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><h5 class="font-black text-slate-800 dark:text-white mb-2">週拉回 / 廉價收購</h5><ul class="list-disc pl-4 space-y-1 text-xs text-slate-500 dark:text-slate-400"><li><strong>核心：</strong>營收YoY>30%。月線分批。</li></ul></div></div>
-                </details>
+            <div class="overflow-y-auto p-6 pt-4 space-y-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300 pb-safe">
+                
+                <section class="space-y-3">
+                    <h4 class="font-black text-blue-600 flex items-center gap-2 text-lg"><i data-lucide="zap" class="w-5 h-5"></i> 1. 打工型 (Freelancer) — 日級別</h4>
+                    <p class="text-xs bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">核心理念：頻繁進出。強調必須嚴守紀律，否則容易虧損退出市場！</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
+                            <h5 class="font-black text-blue-700 mb-1">A. 強勢日 (追漲策略)</h5>
+                            <p class="text-[11px]">強風/陣風適用。選營收 YOY/成值最強。週 MACD 向上，建議 10:00 後觀察追求延續性。</p>
+                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3日內未脫離成本或虧損5%。</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
+                            <h5 class="font-black text-blue-700 mb-1">B. 日拉回 (低吸策略)</h5>
+                            <p class="text-[11px]">易漲循環適用。拉回 5 日線附近買進，建議分 3 次買進建立成本。</p>
+                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3-5天沒發動或破5日線。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-3">
+                    <h4 class="font-black text-indigo-600 flex items-center gap-2 text-lg"><i data-lucide="briefcase" class="w-5 h-5"></i> 2. 上班族 (Office) — 波段操作</h4>
+                    <p class="text-xs bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">核心理念：參與 MACD 趨勢。不需時刻盯盤。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
+                            <h5 class="font-black text-indigo-700 mb-1">A. 強勢週 (趨勢策略)</h5>
+                            <p class="text-[11px]">強風/陣風。日 MACD 剛翻多 1-2 天，確認週 MACD 向上。建議 11:30 後出手。</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
+                            <h5 class="font-black text-indigo-700 mb-1">B. 週趨勢 (拉回策略)</h5>
+                            <p class="text-[11px]">易漲循環。參與週 MACD 剛翻多 1-2 週，拉回 5 日線附近買下跌。停損週五收盤破上週五。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-3">
+                    <h4 class="font-black text-purple-600 flex items-center gap-2 text-lg"><i data-lucide="crown" class="w-5 h-5"></i> 3. 老闆型 (Boss) — 長期/價值</h4>
+                    <p class="text-xs bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/30">核心理念：買拉回(買綠不買紅)。總資金拆 5 份，單一標的上限制 20%。</p>
+                    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
+                        <h5 class="font-black text-purple-700 mb-1 underline">週拉回 / 廉價收購 SOP</h5>
+                        <p class="text-[11px]">營收 YoY > 30% 且創高。強/亂風分 3-5 批靠近月線買；陣/無風分 10-15 批破月線或靠季線買。</p>
+                        <p class="text-[10px] text-red-500 font-bold mt-1">停損：月 MACD 縮短、YoY 轉負、或守季線。</p>
+                    </div>
+                    <div class="bg-red-600 text-white p-4 rounded-2xl shadow-lg border border-red-400">
+                        <p class="font-black text-xs">★ 加碼原則 (必看)：</p>
+                        <p class="text-[11px] mt-1 leading-relaxed">若買進第一筆後獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。</p>
+                    </div>
+                </section>
+
             </div>
         </div>
     </div>
-
     <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]">
         <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
             <div class="flex items-center gap-3 mb-6">
@@ -1175,8 +1210,62 @@
             });
         }
 
-        const personas={freelancer:{title:'打工型',color:'#3b82f6',options:[{name:'強勢日(追漲)',summary:'10:00後。買紅追漲。週MACD向上。',sl:'3日內未脫離成本或虧損5%。',tp:'獲利10%+，破5/10日線。'},{name:'日拉回(低吸)',summary:'拉回5日線進場。分批。',sl:'3~5天沒攻勢或破5日線。',tp:'獲利10%+，且跌破5日/10日線。'}]},office:{title:'上班族',color:'#6366f1',options:[{name:'強勢週(趨勢)',summary:'11:30後。日MACD剛翻多。',sl:'買進4日內未脫離成本。',tp:'獲利10%+，破5/10日線。'},{name:'週趨勢(拉回)',summary:'週MACD剛翻多。拉回買。',sl:'週五收盤低於上週五。',tp:'獲利10%+，週MACD縮短。'}]},boss:{title:'老闆型',color:'#a855f7',options:[{name:'週拉回(分批)',summary:'營收YoY>30%。月線分批。',sl:'月MACD縮短。營收轉負。',tp:'週K站不回5週線。'},{name:'廉價收購(價值)',summary:'回檔至季線。大資金分批。',sl:'金流撤退(月MACD縮)。',tp:'週K站不回5週線。'}]}};
-        const windColors={'強風':'bg-red-500','亂流':'bg-amber-500','陣風':'bg-blue-500','無風':'bg-slate-400'};
+        const personas = {
+    freelancer: {
+        title: '打工型',
+        color: '#3b82f6',
+        options: [
+            { 
+                name: '強勢日(追漲策略)', 
+                summary: '核心：頻繁進出。重點：選營收YOY或成值最強標的，第一/二根紅K，週MACD向上，建議10:00後觀察。', 
+                sl: '1. 買進3日內未脫離成本(-1~2%)\n2. 虧損達5%', 
+                tp: '1. 獲利10%以上(放出風箏)\n2. 收盤跌破5日/10日線' 
+            },
+            { 
+                name: '日拉回(低吸策略)', 
+                summary: '核心：飆股休息。重點：拉回5日線附近買進。建議分3次買進建立成本。', 
+                sl: '1. 3~5天沒發動下一波攻勢\n2. 跌破5日線', 
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+            }
+        ]
+    },
+    office: {
+        title: '上班族',
+        color: '#6366f1',
+        options: [
+            { 
+                name: '強勢週(趨勢策略)', 
+                summary: '核心：MACD趨勢。重點：參與日MACD剛翻多1-2天，確認週MACD向上。建議11:30後出手。', 
+                sl: '1. 買進4日內未脫離成本(-1~3%)\n2. 收盤跌破5日線', 
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+            },
+            { 
+                name: '週趨勢(拉回策略)', 
+                summary: '核心：易漲循環。重點：參與週MACD剛翻多1-2週，拉回5日線買下跌。', 
+                sl: '1. 當週五收盤低於上週五\n2. 跌破10日線', 
+                tp: '1. 獲利10%以上\n2. 週MACD紅柱縮短(週五)\n3. 跌破5週線(5MA)' 
+            }
+        ]
+    },
+    boss: {
+        title: '老闆型',
+        color: '#a855f7',
+        options: [
+            { 
+                name: '週拉回 / 廉價收購', 
+                summary: '重點：營收YoY>30%且創高。強風/亂流分3-5批靠近月線買；陣/無風分10-15批破月線買。', 
+                sl: '1. 月MACD紅柱縮短\n2. 營收YoY轉負\n3. 守季線', 
+                tp: '1. 週K站不回5週線\n2. 週五收盤比上週五低' 
+            },
+            { 
+                name: '加碼原則 (必看)', 
+                summary: '★重要：若第一筆獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。', 
+                sl: '比照原策略停損', 
+                tp: '比照原策略停利' 
+            }
+        ]
+    }
+};        const windColors={'強風':'bg-red-500','亂流':'bg-amber-500','陣風':'bg-blue-500','無風':'bg-slate-400'};
         function formatLargeNumber(n){const a=Math.abs(n);if(a>=1000000000000)return(a/1000000000000).toFixed(2)+'兆';if(a>=100000000)return(a/100000000).toFixed(2)+'億';if(a>=10000)return(a/10000).toFixed(1)+'萬';return Math.round(a).toLocaleString();}
 
         // Initialize UI
@@ -1339,39 +1428,33 @@
         };
 
         window.updateGlobalStats = () => {
-            let tPL = 0, tCost = 0;
-            trades.forEach(t => { 
-                t.history.forEach(h => { 
-                    if(h.type === 'sell'){ 
-                        if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return; 
-                        let pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                        let cost = (t.averagePrice * h.quantity) + window.calculateCost(t.averagePrice, h.quantity, 'buy');
-                        tPL += pnl; 
-                        tCost += cost; 
-                    }
-                });
-            });
-            const plEl = document.getElementById('header-total-pl'); const pctEl = document.getElementById('header-total-pct');
-            if(plEl){ plEl.textContent = `$${formatLargeNumber(tPL)}`; plEl.className = `text-base xs:text-lg font-black leading-tight ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
-            if(pctEl){ let roi = tCost > 0 ? ((tPL / tCost) * 100).toFixed(1) : 0.0; pctEl.textContent = `${roi >= 0 ? '+' : ''}${roi}%`; pctEl.className = `text-[10px] font-bold mt-1 ${roi >= 0 ? 'text-red-400' : 'text-green-500'}`; }
-            document.getElementById('header-portfolio-count').textContent = trades.filter(t => t.status === 'open').length;
-            
-            let w = 0, c = 0; 
-            trades.filter(t => t.status === 'closed').forEach(t => {
-                let p = 0; 
-                t.history.forEach(h => {
-                    if(h.type === 'sell') p += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                });
-                if(p > 0) w++; 
-                c++;
-            });
-            
-            document.getElementById('header-win-rate').textContent = c > 0 ? ((w / c) * 100).toFixed(0) + '%' : '0%';
-            if(window.filterDates.start){document.getElementById('filter-active-range').classList.remove('hidden');document.getElementById('filter-all-label').classList.add('hidden');}else{document.getElementById('filter-active-range').classList.add('hidden');document.getElementById('filter-all-label').classList.remove('hidden');}
-        };
-
+    let tPL = 0, tCost = 0;
+    trades.forEach(t => { 
+        t.history.forEach(h => { 
+            if(h.type === 'sell'){ 
+                if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return; 
+                let pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                let cost = (t.averagePrice * h.quantity) + window.calculateCost(t.averagePrice, h.quantity, 'buy');
+                tPL += pnl; 
+                tCost += cost; 
+            }
+        });
+    });
+    const plEl = document.getElementById('header-total-pl'); const pctEl = document.getElementById('header-total-pct');
+    if(plEl){ plEl.textContent = `$${formatLargeNumber(tPL)}`; plEl.className = `text-base xs:text-lg font-black leading-tight ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
+    if(pctEl){ let roi = tCost > 0 ? ((tPL / tCost) * 100).toFixed(1) : 0.0; pctEl.textContent = `${roi >= 0 ? '+' : ''}${roi}%`; pctEl.className = `text-[10px] font-bold mt-1 ${roi >= 0 ? 'text-red-400' : 'text-green-500'}`; }
+    const countEl = document.getElementById('header-portfolio-count');
+    if(countEl) countEl.textContent = trades.filter(t => t.status === 'open').length;
+    const winEl = document.getElementById('header-win-rate');
+    if(winEl) {
+        let w = 0, c = 0; 
+        trades.filter(t => t.status === 'closed').forEach(t => {
+            let p = 0; t.history.forEach(h => { if(h.type === 'sell') p += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+            if(p > 0) w++; c++;
+        });
+        winEl.textContent = c > 0 ? ((w / c) * 100).toFixed(0) + '%' : '0%';
+    }
+};
     </script>
 </body>
 </html>
-
-
