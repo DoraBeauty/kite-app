@@ -120,11 +120,10 @@
                 
                 <div class="overflow-x-auto no-scrollbar smooth-scroll -mx-4 px-4 pb-1">
                     <div class="glass-card bg-white dark:bg-slate-900 p-4 rounded-[2rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 flex items-center justify-between min-w-[320px]">
-                        <div class="flex-1 text-center border-r border-slate-100 dark:border-slate-800 relative group px-1">
-                            <div class="flex items-center justify-center gap-1 mb-1"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">實現損益</p><button onclick="showFilterModal()" class="text-slate-300 dark:text-slate-600 hover:text-indigo-600 transition-colors p-1 -m-1"><i data-lucide="calendar-search" class="w-3 h-3"></i></button></div>
+                        <div onclick="showStatsModal()" class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex-1 text-center border-r border-slate-100 dark:border-slate-800 relative group px-1">
+                            <div class="flex items-center justify-center gap-1 mb-1"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">實現損益</p><button onclick="showFilterModal()" class="text-slate-300 dark:text-slate-600 hover:text-indigo-600 transition-colors p-1 -m-1" onclick="event.stopPropagation()"><i data-lucide="calendar-search" class="w-3 h-3"></i></button></div>
                             <div class="flex flex-col items-center"><span id="header-total-pl" class="text-base xs:text-lg font-black leading-tight">--</span><span id="header-total-pct" class="text-[10px] font-bold mt-1">--</span></div>
-                        </div>
-                        <div class="flex-1 text-center border-r border-slate-100 dark:border-slate-800 px-1">
+                        </div>                        <div class="flex-1 text-center border-r border-slate-100 dark:border-slate-800 px-1">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">庫存</p>
                             <div class="flex flex-col items-center"><span id="header-portfolio-count" class="text-base xs:text-lg font-black leading-tight text-indigo-600 dark:text-indigo-400">--</span><span class="text-[10px] text-slate-300 dark:text-slate-600 font-bold mt-1 uppercase tracking-tighter">隻</span></div>
                         </div>
@@ -1411,34 +1410,94 @@
             }).join('');
         };
 
+// ✅ 貼上這段新的 (包含彈窗開關 + 詳細費用計算)
+window.showStatsModal = () => document.getElementById('statsModal').classList.remove('hidden');
+        window.closeStatsModal = () => document.getElementById('statsModal').classList.add('hidden');
+
         window.updateGlobalStats = () => {
-    let tPL = 0, tCost = 0;
-    trades.forEach(t => { 
-        t.history.forEach(h => { 
-            if(h.type === 'sell'){ 
-                if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return; 
-                let pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                let cost = (t.averagePrice * h.quantity) + window.calculateCost(t.averagePrice, h.quantity, 'buy');
-                tPL += pnl; 
-                tCost += cost; 
-            }
-        });
-    });
-    const plEl = document.getElementById('header-total-pl'); const pctEl = document.getElementById('header-total-pct');
-    if(plEl){ plEl.textContent = `$${formatLargeNumber(tPL)}`; plEl.className = `text-base xs:text-lg font-black leading-tight ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
-    if(pctEl){ let roi = tCost > 0 ? ((tPL / tCost) * 100).toFixed(1) : 0.0; pctEl.textContent = `${roi >= 0 ? '+' : ''}${roi}%`; pctEl.className = `text-[10px] font-bold mt-1 ${roi >= 0 ? 'text-red-400' : 'text-green-500'}`; }
-    const countEl = document.getElementById('header-portfolio-count');
-    if(countEl) countEl.textContent = trades.filter(t => t.status === 'open').length;
-    const winEl = document.getElementById('header-win-rate');
-    if(winEl) {
-        let w = 0, c = 0; 
-        trades.filter(t => t.status === 'closed').forEach(t => {
-            let p = 0; t.history.forEach(h => { if(h.type === 'sell') p += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
-            if(p > 0) w++; c++;
-        });
-        winEl.textContent = c > 0 ? ((w / c) * 100).toFixed(0) + '%' : '0%';
-    }
-};
-    </script>
+            let tPL = 0, tCost = 0;
+            let totalBuyFee = 0, totalSellFee = 0, totalTax = 0;
+            let winCount = 0, closedCount = 0;
+            const s = window.getFeeSettings();
+            const feeRate = 0.001425 * (s.discount / 10);
+
+            trades.forEach(t => {
+                t.history.forEach(h => {
+                    if(h.type === 'sell'){
+                        if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return;
+                        
+                        // 計算費用細項
+                        const bFee = Math.max(s.minFee, Math.floor(t.entryPrice * h.quantity * feeRate));
+                        const sFee = Math.max(s.minFee, Math.floor(h.price * h.quantity * feeRate));
+                        const tax = Math.floor(h.price * h.quantity * 0.003);
+                        
+                        totalBuyFee += bFee; totalSellFee += sFee; totalTax += tax;
+
+                        // 計算損益
+                        let pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        let cost = (t.averagePrice * h.quantity);
+                        tPL += pnl; tCost += cost;
+                        if(pnl > 0) winCount++; closedCount++;
+                    }
+                });
+            });
+
+            // 更新 Header
+            const plEl = document.getElementById('header-total-pl'); 
+            const pctEl = document.getElementById('header-total-pct');
+            if(plEl){ plEl.textContent = `$${formatLargeNumber(tPL)}`; plEl.className = `text-base xs:text-lg font-black leading-tight ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
+            if(pctEl){ let roi = tCost > 0 ? ((tPL / tCost) * 100).toFixed(1) : 0.0; pctEl.textContent = `${roi >= 0 ? '+' : ''}${roi}%`; pctEl.className = `text-[10px] font-bold mt-1 ${roi >= 0 ? 'text-red-400' : 'text-green-500'}`; }
+            
+            const countEl = document.getElementById('header-portfolio-count');
+            if(countEl) countEl.textContent = trades.filter(t => t.status === 'open').length;
+            
+            const winEl = document.getElementById('header-win-rate');
+            const winStr = closedCount > 0 ? ((winCount / closedCount) * 100).toFixed(0) + '%' : '0%';
+            if(winEl) winEl.textContent = winStr;
+
+            // 更新彈窗數據 (把算好的費用填進去)
+            const totalFees = totalBuyFee + totalSellFee;
+            document.getElementById('modal-net-pnl').textContent = `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`;
+            document.getElementById('modal-net-pnl').className = `text-3xl font-black ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`;
+            document.getElementById('modal-total-fee').textContent = `$${formatLargeNumber(totalFees)}`;
+            document.getElementById('modal-total-tax').textContent = `$${formatLargeNumber(totalTax)}`;
+            document.getElementById('modal-win-rate').textContent = winStr;
+        };    </script>
+   <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]" onclick="closeStatsModal()">
+    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white">
+                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black">損益分析</h3>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">P&L Breakdown</p>
+                </div>
+            </div>
+            <button onclick="closeStatsModal()" class="text-slate-400 bg-slate-50 dark:bg-slate-800 p-2 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl text-center">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">淨損益 (Net P&L)</p>
+                <p id="modal-net-pnl" class="text-3xl font-black">--</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-amber-50 dark:bg-amber-900/10 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+                    <div class="flex items-center gap-2 mb-1"><i data-lucide="coins" class="w-3 h-3 text-amber-500"></i><p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">總手續費</p></div>
+                    <p id="modal-total-fee" class="text-lg font-black text-amber-700 dark:text-amber-500">--</p>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                    <div class="flex items-center gap-2 mb-1"><i data-lucide="landmark" class="w-3 h-3 text-blue-500"></i><p class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase">總證交稅</p></div>
+                    <p id="modal-total-tax" class="text-lg font-black text-blue-700 dark:text-blue-500">--</p>
+                </div>
+            </div>
+            <div class="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-500">交易勝率</span>
+                <span id="modal-win-rate" class="text-base font-black">--</span>
+            </div>
+        </div>
+    </div>
+</div> 
 </body>
 </html>
