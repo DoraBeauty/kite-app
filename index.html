@@ -1352,19 +1352,15 @@
         lucide.createIcons();
 
         // Render Functions
-// =========== 🚀 步驟 2：全新的庫存顯示畫面 ===========
-// =========== 🚀 步驟 2：全新的庫存顯示畫面 (改版：資訊分層) ===========
-// =========== 🚀 步驟 2：庫存畫面 (V3: 加入時間與人格資訊) ===========
-// =========== 🚀 步驟 2：庫存畫面 (V3.1: 修正股號顯示) ===========
-window.renderPortfolio = () => {
+        window.renderPortfolio = () => {
     const list = document.getElementById('portfolio-list'); 
     const openTrades = trades.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt);
     
-    // 取得當前時間作為更新時間 (格式 HH:mm)
+    // 取得當前時間
     const now = new Date();
     const updateTimeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    // 更新按鈕區塊
+    // 重新整理按鈕
     const refreshHeader = `
         <div class="col-span-full flex justify-end mb-2">
             <button onclick="updateStockData()" class="flex items-center gap-1 text-[10px] font-bold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-slate-500">
@@ -1383,12 +1379,10 @@ window.renderPortfolio = () => {
         const hasImg = t.history.some(h => h.screenshot);
         const imgIcon = hasImg ? `<i data-lucide="image" class="w-3.5 h-3.5 text-indigo-400"></i>` : '';
         
-        // --- 計算持有天數與月份 ---
         const entryDateObj = new Date(t.entryDate);
         const daysHeld = Math.floor((new Date() - entryDateObj) / (1000 * 60 * 60 * 24));
-        const entryMonth = t.entryDate.substring(0, 7).replace('-', '/'); // 變成 2026/01 格式
+        const entryMonth = t.entryDate.substring(0, 7).replace('-', '/'); 
         
-        // 取得現價與計算
         const livePrice = window.livePrices[t.symbolCode] || t.averagePrice;
         const isLive = !!window.livePrices[t.symbolCode]; 
         const marketValue = livePrice * t.totalQuantity;
@@ -1396,7 +1390,6 @@ window.renderPortfolio = () => {
         const unPnl = marketValue - costValue;
         const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
         
-        // 顏色邏輯
         const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
         const bgClass = unPnl >= 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-green-50 dark:bg-green-900/10';
 
@@ -1446,6 +1439,8 @@ window.renderPortfolio = () => {
             <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
                 <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
                 <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
+                
+                <button onclick="requestDelete('${t.id}')" class="bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400 px-3 py-2.5 rounded-xl flex items-center justify-center transition-colors border border-transparent hover:border-red-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
         </div>`;
     }).join('');
@@ -1457,20 +1452,13 @@ window.renderHistory = () => {
     const list = document.getElementById('history-list');
     const stats = document.getElementById('history-stats');
     
-    // ★★★ 修正排序邏輯：改用賣出當下的「時間戳記」來排，而不只是日期 ★★★
     const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
-        // 取得該筆交易最後一次「賣出」的時間
         const getLastSellTime = (trade) => {
-            // 從歷史紀錄中由後往前找，找到最後一筆賣出紀錄
             const lastSell = [...trade.history].reverse().find(h => h.type === 'sell');
-            // 如果有紀錄時間戳記(timestamp)，就用它 (最準)
             if (lastSell && lastSell.timestamp) return lastSell.timestamp;
-            // 如果是舊資料沒有時間戳記，就用日期頂替
             if (trade.exitDate) return new Date(trade.exitDate).getTime();
             return 0;
         };
-        
-        // B - A 代表降冪排序 (時間越新的數字越大，排在越前面)
         return getLastSellTime(b) - getLastSellTime(a);
     });
 
@@ -1507,7 +1495,7 @@ window.renderHistory = () => {
         const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
         const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
         
-        return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center" onclick="viewDetails('${t.id}')">
+        return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative" onclick="viewDetails('${t.id}')">
             
             <div class="flex flex-col gap-1.5">
                 <div class="flex items-center gap-2">
@@ -1526,12 +1514,18 @@ window.renderHistory = () => {
                 </div>
             </div>
 
-            <div class="text-right">
-                <p class="text-lg xs:text-xl font-black ${pnlClass}">
-                    ${sign}$${formatLargeNumber(totalPnL)}
-                    <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
-                </p>
-                <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-lg xs:text-xl font-black ${pnlClass}">
+                        ${sign}$${formatLargeNumber(totalPnL)}
+                        <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
+                    </p>
+                    <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
+                </div>
+                
+                <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
             </div>
 
         </div>`;
