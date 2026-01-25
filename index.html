@@ -1456,10 +1456,22 @@ window.renderPortfolio = () => {
 window.renderHistory = () => {
     const list = document.getElementById('history-list');
     const stats = document.getElementById('history-stats');
+    
+    // ★★★ 修正排序邏輯：改用賣出當下的「時間戳記」來排，而不只是日期 ★★★
     const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
-        const aDate = a.exitDate || a.history[a.history.length - 1]?.date || '';
-        const bDate = b.exitDate || b.history[b.history.length - 1]?.date || '';
-        return bDate.localeCompare(aDate);
+        // 取得該筆交易最後一次「賣出」的時間
+        const getLastSellTime = (trade) => {
+            // 從歷史紀錄中由後往前找，找到最後一筆賣出紀錄
+            const lastSell = [...trade.history].reverse().find(h => h.type === 'sell');
+            // 如果有紀錄時間戳記(timestamp)，就用它 (最準)
+            if (lastSell && lastSell.timestamp) return lastSell.timestamp;
+            // 如果是舊資料沒有時間戳記，就用日期頂替
+            if (trade.exitDate) return new Date(trade.exitDate).getTime();
+            return 0;
+        };
+        
+        // B - A 代表降冪排序 (時間越新的數字越大，排在越前面)
+        return getLastSellTime(b) - getLastSellTime(a);
     });
 
     if (closedTrades.length === 0) {
@@ -1471,28 +1483,22 @@ window.renderHistory = () => {
     list.innerHTML = closedTrades.map(t => {
         let totalPnL = 0;
         let totalFees = 0;
-        let totalCost = 0; // 用來算 % 數的本金
+        let totalCost = 0; 
 
         t.history.forEach(h => {
             if(h.type === 'sell') {
                 totalPnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
                 totalFees += window.calculateCost(h.price, h.quantity, 'sell');
-                // 累加賣出部位的原始成本
                 totalCost += (t.averagePrice * h.quantity);
             } else if(h.type === 'buy') {
                 totalFees += window.calculateCost(h.price, h.quantity, 'buy');
             }
         });
 
-        // 計算報酬率 %
         const roi = totalCost > 0 ? ((totalPnL / totalCost) * 100).toFixed(1) : 0;
-        
-        // 處理正負號
         const sign = totalPnL >= 0 ? '+' : '-';
-
         const exitDateStr = t.exitDate || t.history[t.history.length - 1]?.date || '';
         
-        // 計算持有天數
         const start = new Date(t.entryDate);
         const end = new Date(exitDateStr);
         const daysHeld = Math.max(1, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
