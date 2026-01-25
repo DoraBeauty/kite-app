@@ -1353,145 +1353,186 @@
 
         // Render Functions
 // =========== 🚀 步驟 2：全新的庫存顯示畫面 ===========
+// =========== 🚀 步驟 2：全新的庫存顯示畫面 (改版：資訊分層) ===========
+// =========== 🚀 步驟 2：庫存畫面 (V3: 加入時間與人格資訊) ===========
+// =========== 🚀 步驟 2：庫存畫面 (V3.1: 修正股號顯示) ===========
 window.renderPortfolio = () => {
-            const list = document.getElementById('portfolio-list'); 
-            const openTrades = trades.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt);
+    const list = document.getElementById('portfolio-list'); 
+    const openTrades = trades.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt);
+    
+    // 取得當前時間作為更新時間 (格式 HH:mm)
+    const now = new Date();
+    const updateTimeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    // 更新按鈕區塊
+    const refreshHeader = `
+        <div class="col-span-full flex justify-end mb-2">
+            <button onclick="updateStockData()" class="flex items-center gap-1 text-[10px] font-bold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-slate-500">
+                <i data-lucide="refresh-cw" class="w-3 h-3" id="refresh-btn-icon"></i>
+                <span>更新報價</span>
+            </button>
+        </div>`;
+
+    if (openTrades.length === 0) { 
+        list.innerHTML = refreshHeader + `<div class="col-span-full text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">無持倉</div>`; 
+        lucide.createIcons();
+        return; 
+    }
+
+    const cardsHtml = openTrades.map(t => {
+        const hasImg = t.history.some(h => h.screenshot);
+        const imgIcon = hasImg ? `<i data-lucide="image" class="w-3.5 h-3.5 text-indigo-400"></i>` : '';
+        
+        // --- 計算持有天數與月份 ---
+        const entryDateObj = new Date(t.entryDate);
+        const daysHeld = Math.floor((new Date() - entryDateObj) / (1000 * 60 * 60 * 24));
+        const entryMonth = t.entryDate.substring(0, 7).replace('-', '/'); // 變成 2026/01 格式
+        
+        // 取得現價與計算
+        const livePrice = window.livePrices[t.symbolCode] || t.averagePrice;
+        const isLive = !!window.livePrices[t.symbolCode]; 
+        const marketValue = livePrice * t.totalQuantity;
+        const costValue = t.averagePrice * t.totalQuantity; 
+        const unPnl = marketValue - costValue;
+        const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
+        
+        // 顏色邏輯
+        const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
+        const bgClass = unPnl >= 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-green-50 dark:bg-green-900/10';
+
+        return `<div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 btn-press relative overflow-hidden" onclick="viewDetails('${t.id}')">
             
-            // 這是手動更新按鈕
-            const refreshHeader = `
-                <div class="col-span-full flex justify-end mb-2">
-                    <button onclick="updateStockData()" class="flex items-center gap-1 text-[10px] font-bold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-slate-500">
-                        <i data-lucide="refresh-cw" class="w-3 h-3" id="refresh-btn-icon"></i>
-                        <span>更新報價</span>
-                    </button>
-                </div>`;
+            <div class="absolute right-0 top-0 bottom-0 w-24 ${bgClass} opacity-50 blur-2xl pointer-events-none"></div>
 
-            if (openTrades.length === 0) { 
-                list.innerHTML = refreshHeader + `<div class="col-span-full text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">無持倉</div>`; 
-                lucide.createIcons();
-                return; 
-            }
-
-            const cardsHtml = openTrades.map(t => {
-                const hasImg = t.history.some(h => h.screenshot);
-                const imgIcon = hasImg ? `<i data-lucide="image" class="w-3.5 h-3.5 text-indigo-400"></i>` : '';
-                
-                // ★ 這裡在變魔術：如果有抓到現價，就用現價；沒有就用成本價
-                const livePrice = window.livePrices[t.symbolCode] || t.averagePrice;
-                const isLive = !!window.livePrices[t.symbolCode]; 
-                
-                // 計算賺多少錢
-                const marketValue = livePrice * t.totalQuantity;
-                const costValue = t.averagePrice * t.totalQuantity; 
-                const unPnl = marketValue - costValue;
-                const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
-                
-                // 決定要亮紅燈還是綠燈
-                const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
-                const bgClass = unPnl >= 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-green-50 dark:bg-green-900/10';
-
-                return `<div class="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 btn-press" onclick="viewDetails('${t.id}')">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-black px-2 py-0.5 rounded-lg text-white" style="background-color: ${personas[t.persona].color}">${t.strategyName}</span>
-                            <h3 class="text-lg font-black flex items-center gap-2">${t.symbolName} ${imgIcon}</h3>
-                        </div>
-                        <div class="text-right">
-                             <p class="text-xs text-slate-400 font-bold">現價 ${isLive ? '🔴' : ''}</p>
-                             <p class="text-base font-black ${isLive ? 'text-slate-800 dark:text-slate-200' : 'text-slate-300'}">$${livePrice}</p>
-                        </div>
+            <div class="flex justify-between items-start relative z-10 mb-2">
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div class="${bgClass} p-3 rounded-2xl flex flex-col items-center justify-center">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase">損益試算</p>
-                            <p class="text-lg font-black ${pnlClass}">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
-                        </div>
-                        <div class="${bgClass} p-3 rounded-2xl flex flex-col items-center justify-center">
-                            <p class="text-[9px] text-slate-400 font-bold uppercase">報酬率</p>
-                            <p class="text-lg font-black ${pnlClass}">${roi}%</p>
-                        </div>
+                    <div class="flex items-baseline gap-1.5">
+                        <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">${t.symbolName}</h3>
+                        <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
+                        ${imgIcon}
                     </div>
 
-                    <div class="flex gap-2" onclick="event.stopPropagation()">
-                        <button onclick="addPosition('${t.id}')" class="flex-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 px-3 py-2 rounded-xl flex items-center justify-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
-                        <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-2 rounded-xl flex items-center justify-center gap-1"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <i data-lucide="clock" class="w-3 h-3 text-slate-300"></i>
+                        <p class="text-[10px] font-bold text-slate-400">${entryMonth} (${daysHeld}天)</p>
                     </div>
-                </div>`;
-            }).join(''); 
-            
-            list.innerHTML = refreshHeader + cardsHtml;
-            lucide.createIcons();
-        };
-        // =========== 步驟 2 結束 ===========
-        window.renderHistory = () => {
-            const list = document.getElementById('history-list');
-            const stats = document.getElementById('history-stats');
-            const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
-                const aDate = a.exitDate || a.history[a.history.length - 1]?.date || '';
-                const bDate = b.exitDate || b.history[b.history.length - 1]?.date || '';
-                return bDate.localeCompare(aDate);
-            });
+                </div>
 
-            if (closedTrades.length === 0) {
-                list.innerHTML = `<div class="text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">尚無歷史交易</div>`;
-                if (stats) stats.innerHTML = '';
-                return;
+                <div class="text-right">
+                    <p class="text-2xl font-black ${pnlClass} tracking-tight">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
+                    <p class="text-xs font-bold ${pnlClass} mb-1">${roi}%</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-3 relative z-10">
+                <div class="text-left">
+                    <p class="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
+                    <p class="text-xs font-black text-slate-600 dark:text-slate-400">$${t.averagePrice.toFixed(1)} <span class="text-slate-300">|</span> ${t.totalQuantity}股</p>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
+                        ${isLive ? '<span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>' : ''}
+                    </div>
+                    <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 $${livePrice}</p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
+                <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
+                <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
+            </div>
+        </div>`;
+    }).join('');
+    
+    list.innerHTML = refreshHeader + cardsHtml;
+    lucide.createIcons();
+};
+window.renderHistory = () => {
+    const list = document.getElementById('history-list');
+    const stats = document.getElementById('history-stats');
+    const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
+        const aDate = a.exitDate || a.history[a.history.length - 1]?.date || '';
+        const bDate = b.exitDate || b.history[b.history.length - 1]?.date || '';
+        return bDate.localeCompare(aDate);
+    });
+
+    if (closedTrades.length === 0) {
+        list.innerHTML = `<div class="text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">尚無歷史交易</div>`;
+        if (stats) stats.innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = closedTrades.map(t => {
+        let totalPnL = 0;
+        let totalFees = 0;
+        let totalCost = 0; // 用來算 % 數的本金
+
+        t.history.forEach(h => {
+            if(h.type === 'sell') {
+                totalPnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                totalFees += window.calculateCost(h.price, h.quantity, 'sell');
+                // 累加賣出部位的原始成本
+                totalCost += (t.averagePrice * h.quantity);
+            } else if(h.type === 'buy') {
+                totalFees += window.calculateCost(h.price, h.quantity, 'buy');
             }
+        });
 
-            let totalPnL = 0;
-            let winCount = 0;
-            let totalFeesAll = 0;
-            closedTrades.forEach(t => {
-                let pnl = 0;
-                t.history.forEach(h => {
-                    if(h.type === 'sell') {
-                        pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                        totalFeesAll += window.calculateCost(h.price, h.quantity, 'sell');
-                    } else if(h.type === 'buy') {
-                        totalFeesAll += window.calculateCost(h.price, h.quantity, 'buy');
-                    }
-                });
-                totalPnL += pnl;
-                if(pnl > 0) winCount++;
-            });
+        // 計算報酬率 %
+        const roi = totalCost > 0 ? ((totalPnL / totalCost) * 100).toFixed(1) : 0;
+        
+        // 處理正負號
+        const sign = totalPnL >= 0 ? '+' : '-';
 
+        const exitDateStr = t.exitDate || t.history[t.history.length - 1]?.date || '';
+        
+        // 計算持有天數
+        const start = new Date(t.entryDate);
+        const end = new Date(exitDateStr);
+        const daysHeld = Math.max(1, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
+        const monthStr = t.entryDate.substring(0, 7).replace('-', '/');
 
-            list.innerHTML = closedTrades.map(t => {
-                let totalPnL = 0;
-                let totalFees = 0;
-                t.history.forEach(h => {
-                    if(h.type === 'sell') {
-                        totalPnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                        totalFees += window.calculateCost(h.price, h.quantity, 'sell');
-                    } else if(h.type === 'buy') {
-                        totalFees += window.calculateCost(h.price, h.quantity, 'buy');
-                    }
-                });
-                const exitDate = t.exitDate || t.history[t.history.length - 1]?.date || '';
-                const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
-                const bgClass = totalPnL >= 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30';
+        const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
+        const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
+        
+        return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center" onclick="viewDetails('${t.id}')">
+            
+            <div class="flex flex-col gap-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${monthStr}</span>
+                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                </div>
                 
-                return `<div class="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border ${bgClass} btn-press" onclick="viewDetails('${t.id}')">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="text-[10px] font-black px-2 py-0.5 rounded-lg text-white" style="background-color: ${personas[t.persona].color}">${t.strategyName}</span>
-                            <h3 class="text-lg font-black mt-2">${t.symbolCode} ${t.symbolName}</h3>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-slate-400 font-bold">${exitDate}</p>
-                            <p class="text-xl font-black ${pnlClass} mt-1">${totalPnL >= 0 ? '+' : ''}$${formatLargeNumber(totalPnL)}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-3 text-xs">
-                        <div><span class="text-slate-400 font-bold">均價</span><p class="font-black">$${t.averagePrice.toFixed(2)}</p></div>
-                        <div><span class="text-slate-400 font-bold">數量</span><p class="font-black">${t.totalQuantity}</p></div>
-                        <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 border border-amber-100 dark:border-amber-900/30"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">總手續費</span><p class="font-black text-amber-600 dark:text-amber-400">$${totalFees.toLocaleString()}</p></div>
-                    </div>
-                </div>`;
-            }).join('');
-        };
+                <div class="flex items-baseline gap-1.5">
+                    <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
+                    <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                </div>
+                
+                <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                    <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
+                    <span>費 $${totalFees.toLocaleString()}</span>
+                </div>
+            </div>
 
+            <div class="text-right">
+                <p class="text-lg xs:text-xl font-black ${pnlClass}">
+                    ${sign}$${formatLargeNumber(totalPnL)}
+                    <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
+                </p>
+                <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
+            </div>
+
+        </div>`;
+    }).join('');
+    
+    lucide.createIcons();
+};
 // ✅ 貼上這段新的 (包含彈窗開關 + 詳細費用計算)
 window.showStatsModal = () => document.getElementById('statsModal').classList.remove('hidden');
         window.closeStatsModal = () => document.getElementById('statsModal').classList.add('hidden');
