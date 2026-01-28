@@ -1389,7 +1389,9 @@
                 const isLive = !!window.livePrices[t.symbolCode]; 
                 const marketValue = livePrice * t.totalQuantity;
                 const costValue = t.averagePrice * t.totalQuantity; 
-                const unPnl = marketValue - costValue;
+                // 扣除預估賣出成本 (手續費+稅) 以符合券商未實現損益計算
+                const estimateSellCost = window.calculateCost(livePrice, t.totalQuantity, 'sell');
+                const unPnl = marketValue - costValue - estimateSellCost;
                 const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
                 
                 const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
