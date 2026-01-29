@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>風箏選股交易紀錄系統 (Cloud v1.5 Fee Edition)</title>
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -690,7 +694,19 @@
         // --- 手續費計算核心 ---
         window.getFeeSettings = () => {
             const saved = localStorage.getItem('kite_fee_settings');
-            return saved ? JSON.parse(saved) : { discount: 1.7, minFee: 1, initialCapital: 1000000 }; 
+            const defaults = { discount: 1.7, minFee: 1, initialCapital: 1000000 };
+            
+            if (saved) {
+                try {
+                    const savedSettings = JSON.parse(saved);
+                    // 將儲存的設定與預設值合併，確保所有欄位都存在
+                    return { ...defaults, ...savedSettings };
+                } catch (e) {
+                    console.error("讀取設定失敗，使用預設值。", e);
+                    return defaults; // 如果解析失敗，回傳預設值
+                }
+            }
+            return defaults; // 如果沒有儲存過，回傳預設值
         };
 
         window.openSettingsModal = () => {
