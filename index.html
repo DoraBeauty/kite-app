@@ -119,17 +119,38 @@
                 </div>
                 
                 <div class="overflow-x-auto no-scrollbar smooth-scroll -mx-4 px-4 pb-1">
-                    <div class="glass-card bg-white dark:bg-slate-900 p-4 rounded-[2rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 flex items-center justify-between min-w-[320px]">
-                        <div onclick="showStatsModal()" class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex-1 text-center border-r border-slate-100 dark:border-slate-800 relative group px-1">
-                            <div class="flex items-center justify-center gap-1 mb-1"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">實現損益</p><button onclick="showFilterModal()" class="text-slate-300 dark:text-slate-600 hover:text-indigo-600 transition-colors p-1 -m-1" onclick="event.stopPropagation()"><i data-lucide="calendar-search" class="w-3 h-3"></i></button></div>
-                            <div class="flex flex-col items-center"><span id="header-total-pl" class="text-base xs:text-lg font-black leading-tight">--</span><span id="header-total-pct" class="text-[10px] font-bold mt-1">--</span></div>
-                        </div>                        <div class="flex-1 text-center border-r border-slate-100 dark:border-slate-800 px-1">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">庫存</p>
-                            <div class="flex flex-col items-center"><span id="header-portfolio-count" class="text-base xs:text-lg font-black leading-tight text-indigo-600 dark:text-indigo-400">--</span><span class="text-[10px] text-slate-300 dark:text-slate-600 font-bold mt-1 uppercase tracking-tighter">隻</span></div>
+                    <div class="glass-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 relative overflow-hidden min-w-[340px]">
+                        <!-- 背景裝飾 -->
+                        <div class="absolute -right-8 -top-8 w-40 h-40 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <!-- 上半部：總資產與本金 -->
+                        <div class="relative z-10 mb-5 flex justify-between items-end">
+                            <div>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i> 目前資產總值</p>
+                                <h2 id="header-total-assets" class="text-3xl xs:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">--</h2>
+                            </div>
+                            <div class="text-right pl-4">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">投入本金</p>
+                                <p id="header-initial-capital" class="text-sm font-black text-slate-600 dark:text-slate-300">--</p>
+                            </div>
                         </div>
-                        <div class="flex-1 text-center px-1">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">勝率</p>
-                            <div class="flex flex-col items-center"><span id="header-win-rate" class="text-base xs:text-lg font-black leading-tight">--</span><div class="flex flex-col items-center"><span id="filter-all-label" class="text-[10px] text-slate-300 dark:text-slate-600 font-bold mt-1 uppercase tracking-tighter">全時段</span><span id="filter-active-range" class="text-[9px] text-indigo-500 dark:text-indigo-300 font-bold mt-1 hidden bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full">篩選中</span></div></div>
+
+                        <!-- 分隔線 -->
+                        <div class="h-px bg-slate-100 dark:bg-slate-800 mb-4"></div>
+
+                        <!-- 下半部：詳細數據 Grid -->
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-4 relative z-10">
+                            <!-- 左側：股票相關 -->
+                            <div class="space-y-3">
+                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">持有股票市值</p><p id="header-market-value" class="text-base font-black text-slate-700 dark:text-slate-200">--</p></div>
+                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">未實現損益</p><div class="flex items-baseline gap-1.5"><span id="header-unrealized-pl" class="text-base font-black">--</span><span id="header-unrealized-pct" class="text-[10px] font-bold">--</span></div></div>
+                            </div>
+
+                            <!-- 右側：現金與已實現 -->
+                            <div class="space-y-3 text-right">
+                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">剩餘可用資金</p><p id="header-available-cash" class="text-base font-black text-indigo-600 dark:text-indigo-400">--</p></div>
+                                <div onclick="showStatsModal()" class="cursor-pointer group"><div class="flex items-center justify-end gap-1 mb-0.5"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">已實現損益</p><i data-lucide="chevron-right" class="w-3 h-3 text-slate-300 group-hover:text-indigo-500 transition-colors"></i></div><p id="header-total-pl" class="text-base font-black">--</p></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -450,6 +471,14 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">初始投入本金 (元)</label>
+                    <div class="relative">
+                        <input type="number" inputmode="numeric" id="setting-initial-capital" step="10000" placeholder="例如 500000" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">手續費最低低消 (元)</label>
                     <div class="relative">
                         <input type="number" inputmode="numeric" id="setting-min-fee" step="1" placeholder="例如 1" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
@@ -661,13 +690,14 @@
         // --- 手續費計算核心 ---
         window.getFeeSettings = () => {
             const saved = localStorage.getItem('kite_fee_settings');
-            return saved ? JSON.parse(saved) : { discount: 1.7, minFee: 1 }; 
+            return saved ? JSON.parse(saved) : { discount: 1.7, minFee: 1, initialCapital: 1000000 }; 
         };
 
         window.openSettingsModal = () => {
             const s = window.getFeeSettings();
             document.getElementById('setting-discount').value = s.discount;
             document.getElementById('setting-min-fee').value = s.minFee;
+            document.getElementById('setting-initial-capital').value = s.initialCapital || 0;
             document.getElementById('user-menu').classList.add('hidden');
             document.getElementById('settingsModal').classList.remove('hidden');
         };
@@ -677,7 +707,8 @@
         window.saveSettings = () => {
             const discount = parseFloat(document.getElementById('setting-discount').value) || 1.7;
             const minFee = parseInt(document.getElementById('setting-min-fee').value) || 1;
-            localStorage.setItem('kite_fee_settings', JSON.stringify({ discount, minFee }));
+            const initialCapital = parseInt(document.getElementById('setting-initial-capital').value) || 0;
+            localStorage.setItem('kite_fee_settings', JSON.stringify({ discount, minFee, initialCapital }));
             closeSettingsModal();
             renderHistory();
             updateGlobalStats(); 
@@ -1105,9 +1136,9 @@
                 }
                 
                 const imageHtml = h.screenshot 
-                    ? `<div onclick="openImageModal('${h.screenshot}')" class="mt-3 h-32 w-full rounded-xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center border border-slate-200 dark:border-slate-700 cursor-pointer relative group overflow-hidden" style="background-image: url('${h.screenshot}')">
+                    ? `<div onclick="openImageModal('${h.screenshot}')" class="mt-2 h-16 w-24 rounded-xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center border border-slate-200 dark:border-slate-700 cursor-pointer relative group overflow-hidden" style="background-image: url('${h.screenshot}')">
                          <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                            <div class="bg-black/50 text-white px-3 py-1 rounded-full text-[10px] backdrop-blur-md flex items-center gap-1"><i data-lucide="zoom-in" class="w-3 h-3"></i> 點擊放大</div>
+                            <div class="bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md"><i data-lucide="zoom-in" class="w-3 h-3"></i></div>
                          </div>
                        </div>` 
                     : '';
@@ -1122,7 +1153,7 @@
                         <span class="text-[10px] font-bold text-slate-400">${h.wind || '-'}</span>
                     </div>
                     ${feeDisplay}
-                    ${h.note ? `<p class="text-[10px] text-slate-500 mt-2 leading-relaxed border-t border-dashed border-slate-200 dark:border-slate-700 pt-2">${h.note}</p>` : ''} 
+                    ${h.note ? `<p class="text-sm font-bold text-slate-700 dark:text-slate-300 mt-2 leading-relaxed border-t border-dashed border-slate-200 dark:border-slate-700 pt-2">${h.note}</p>` : ''} 
                     ${imageHtml}
                     ${pnlDisplay}
                 </div>`; 
@@ -1333,12 +1364,6 @@
                 summary: '重點：營收YoY>30%且創高。強風/亂流分3-5批靠近月線買；陣/無風分10-15批破月線買。', 
                 sl: '1. 月MACD紅柱縮短\n2. 營收YoY轉負\n3. 守季線', 
                 tp: '1. 週K站不回5週線\n2. 週五收盤比上週五低' 
-            },
-            { 
-                name: '加碼原則 (必看)', 
-                summary: '★重要：若第一筆獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。', 
-                sl: '比照原策略停損', 
-                tp: '比照原策略停利' 
             }
         ]
     }
@@ -1389,9 +1414,7 @@
                 const isLive = !!window.livePrices[t.symbolCode]; 
                 const marketValue = livePrice * t.totalQuantity;
                 const costValue = t.averagePrice * t.totalQuantity; 
-                // 扣除預估賣出成本 (手續費+稅) 以符合券商未實現損益計算
-                const estimateSellCost = window.calculateCost(livePrice, t.totalQuantity, 'sell');
-                const unPnl = marketValue - costValue - estimateSellCost;
+                const unPnl = marketValue - costValue;
                 const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
                 
                 const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
@@ -1545,46 +1568,88 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 
         window.updateGlobalStats = () => {
             let tPL = 0, tCost = 0;
+            let allTimePL = 0; // 用於計算現金流的全時段損益
             let totalBuyFee = 0, totalSellFee = 0, totalTax = 0;
             let winCount = 0, closedCount = 0;
+            
+            // --- 新增：未實現損益計算變數 ---
+            let tUnrealized = 0;
+            let tOpenCost = 0;
             const s = window.getFeeSettings();
             const feeRate = 0.001425 * (s.discount / 10);
 
             trades.forEach(t => {
                 t.history.forEach(h => {
                     if(h.type === 'sell'){
+                        const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        
+                        // 1. 累計全時段損益 (算現金用)
+                        allTimePL += pnl;
+
+                        // 2. 累計篩選區間損益 (顯示用)
                         if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return;
                         
                         // 計算費用細項
                         const bFee = Math.max(s.minFee, Math.floor(t.entryPrice * h.quantity * feeRate));
                         const sFee = Math.max(s.minFee, Math.floor(h.price * h.quantity * feeRate));
                         const tax = Math.floor(h.price * h.quantity * 0.003);
-                        
                         totalBuyFee += bFee; totalSellFee += sFee; totalTax += tax;
 
                         // 計算損益
-                        let pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
                         let cost = (t.averagePrice * h.quantity);
                         tPL += pnl; tCost += cost;
                         if(pnl > 0) winCount++; closedCount++;
                     }
                 });
+
+                // 2. 計算未實現 (Unrealized) - 針對持倉中
+                if (t.status === 'open') {
+                    const currentPrice = window.livePrices[t.symbolCode] || t.averagePrice;
+                    const marketVal = currentPrice * t.totalQuantity;
+                    const costVal = t.averagePrice * t.totalQuantity;
+                    tUnrealized += (marketVal - costVal);
+                    tOpenCost += costVal;
+                }
             });
 
-            // 更新 Header
+            // 計算資產數據
+            const initialCapital = s.initialCapital || 0;
+            const availableCash = initialCapital + allTimePL - tOpenCost; // 本金 + 歷史總賺賠 - 目前卡在股票裡的錢
+            const marketValue = tOpenCost + tUnrealized; // 持倉成本 + 未實現損益
+            const totalAssets = availableCash + marketValue;
+
+            // 更新 Header 卡片數據
+            const totalAssetsEl = document.getElementById('header-total-assets');
+            if(totalAssetsEl) totalAssetsEl.textContent = `$${formatLargeNumber(totalAssets)}`;
+            
+            const initCapEl = document.getElementById('header-initial-capital');
+            if(initCapEl) initCapEl.textContent = `$${formatLargeNumber(initialCapital)}`;
+
+            const mktValEl = document.getElementById('header-market-value');
+            if(mktValEl) mktValEl.textContent = `$${formatLargeNumber(marketValue)}`;
+
+            const cashEl = document.getElementById('header-available-cash');
+            if(cashEl) cashEl.textContent = `$${formatLargeNumber(availableCash)}`;
+
+            // 更新 Header - 已實現損益 (受篩選影響)
             const plEl = document.getElementById('header-total-pl'); 
-            const pctEl = document.getElementById('header-total-pct');
-            if(plEl){ plEl.textContent = `$${formatLargeNumber(tPL)}`; plEl.className = `text-base xs:text-lg font-black leading-tight ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
-            if(pctEl){ let roi = tCost > 0 ? ((tPL / tCost) * 100).toFixed(1) : 0.0; pctEl.textContent = `${roi >= 0 ? '+' : ''}${roi}%`; pctEl.className = `text-[10px] font-bold mt-1 ${roi >= 0 ? 'text-red-400' : 'text-green-500'}`; }
+            if(plEl){ plEl.textContent = `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`; plEl.className = `text-base font-black ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
             
-            const countEl = document.getElementById('header-portfolio-count');
-            if(countEl) countEl.textContent = trades.filter(t => t.status === 'open').length;
-            
-            const winEl = document.getElementById('header-win-rate');
-            const winStr = closedCount > 0 ? ((winCount / closedCount) * 100).toFixed(0) + '%' : '0%';
-            if(winEl) winEl.textContent = winStr;
+            // 更新 Header - 未實現損益
+            const unPlEl = document.getElementById('header-unrealized-pl');
+            const unPctEl = document.getElementById('header-unrealized-pct');
+            if(unPlEl) {
+                unPlEl.textContent = `${tUnrealized >= 0 ? '+' : ''}$${formatLargeNumber(tUnrealized)}`;
+                unPlEl.className = `text-base font-black ${tUnrealized >= 0 ? 'text-red-500' : 'text-green-600'}`;
+            }
+            if(unPctEl) {
+                let unRoi = tOpenCost > 0 ? ((tUnrealized / tOpenCost) * 100).toFixed(1) : 0.0;
+                unPctEl.textContent = `${unRoi >= 0 ? '+' : ''}${unRoi}%`;
+                unPctEl.className = `text-[10px] font-bold ${unRoi >= 0 ? 'text-red-400' : 'text-green-500'}`;
+            }
 
             // 更新彈窗數據 (把算好的費用填進去)
+            const winStr = closedCount > 0 ? ((winCount / closedCount) * 100).toFixed(0) + '%' : '0%';
             const totalFees = totalBuyFee + totalSellFee;
             document.getElementById('modal-net-pnl').textContent = `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`;
             document.getElementById('modal-net-pnl').className = `text-3xl font-black ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`;
