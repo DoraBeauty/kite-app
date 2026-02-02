@@ -991,7 +991,13 @@
         window.tempScreenshot = null;
         window.currentYear = new Date().getFullYear();
         window.currentMonth = new Date().getMonth();
-        window.selectedDate = new Date().toISOString().split('T')[0];
+
+        window.getLocalISODate = () => {
+            const d = new Date();
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        };
+        window.selectedDate = window.getLocalISODate();
         
         window.switchTab = (t) => { 
             ['add','portfolio','history','strategy', 'journal'].forEach(p=>{
@@ -1167,7 +1173,10 @@
             document.getElementById('detail-subtitle').textContent = `均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`; 
             const list = document.getElementById('detail-list'); 
             let currentCost = 0, currentQty = 0, avgPrice = 0; 
-            const sortedHistory = [...t.history].sort((a,b) => a.timestamp - b.timestamp); 
+
+            // Map with original index to ensure robust editing even if sorted or timestamps missing
+            const historyWithIndex = t.history.map((h, i) => ({ ...h, originalIndex: i }));
+            const sortedHistory = historyWithIndex.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
             
             const htmlItems = sortedHistory.map(h => { 
                 let pnlDisplay = ''; 
@@ -1200,6 +1209,9 @@
                        </div>` 
                     : '';
 
+                // Use originalIndex for ID and handlers
+                const idx = h.originalIndex;
+
                 return `<div class="p-4 rounded-2xl border ${h.type === 'buy' ? 'bg-indigo-50/50 border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30' : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}">
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${h.type === 'buy' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'}">${h.type === 'buy' ? '買進' : '賣出'}</span>
@@ -1211,16 +1223,16 @@
                     </div>
                     ${feeDisplay}
 
-                    <div id="note-view-${h.timestamp}" class="group relative">
+                    <div id="note-view-${idx}" class="group relative">
                         <p class="text-sm font-bold text-slate-700 dark:text-slate-300 mt-2 leading-relaxed border-t border-dashed border-slate-200 dark:border-slate-700 pt-2 whitespace-pre-wrap">${window.escapeHtml(h.note) || '<span class="text-slate-400 italic font-normal text-xs">無備註</span>'}</p>
-                        <button onclick="toggleEditNote('${t.id}', ${h.timestamp})" class="absolute top-2 right-0 p-1 text-slate-300 hover:text-indigo-500 transition-colors"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                        <button onclick="toggleEditNote('${t.id}', ${idx})" class="absolute top-2 right-0 p-1 text-slate-300 hover:text-indigo-500 transition-colors"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
                     </div>
 
-                    <div id="note-edit-${h.timestamp}" class="hidden mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
-                        <textarea id="note-input-${h.timestamp}" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 mb-2">${h.note || ''}</textarea>
+                    <div id="note-edit-${idx}" class="hidden mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                        <textarea id="note-input-${idx}" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 mb-2">${h.note || ''}</textarea>
                         <div class="flex justify-end gap-2">
-                            <button onclick="toggleEditNote('${t.id}', ${h.timestamp})" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
-                            <button onclick="saveHistoryNote('${t.id}', ${h.timestamp})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700">儲存</button>
+                            <button onclick="toggleEditNote('${t.id}', ${idx})" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
+                            <button onclick="saveHistoryNote('${t.id}', ${idx})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700">儲存</button>
                         </div>
                     </div>
 
@@ -1235,51 +1247,42 @@
         
         window.closeDetailsModal = () => document.getElementById('detailsModal').classList.add('hidden');
 
-        window.toggleEditNote = (tradeId, timestamp) => {
-            const viewEl = document.getElementById(`note-view-${timestamp}`);
-            const editEl = document.getElementById(`note-edit-${timestamp}`);
+        window.toggleEditNote = (tradeId, idx) => {
+            const viewEl = document.getElementById(`note-view-${idx}`);
+            const editEl = document.getElementById(`note-edit-${idx}`);
             if(viewEl && editEl) {
                 viewEl.classList.toggle('hidden');
                 editEl.classList.toggle('hidden');
             }
         };
 
-        window.saveHistoryNote = async (tradeId, timestamp) => {
+        window.saveHistoryNote = async (tradeId, idx) => {
             const t = trades.find(item => item.id === tradeId);
             if(!t) return;
 
-            const newContent = document.getElementById(`note-input-${timestamp}`).value;
-            const newHistory = t.history.map(h => {
-                if(h.timestamp === timestamp) {
-                    return { ...h, note: newContent };
-                }
-                return h;
-            });
+            const newContent = document.getElementById(`note-input-${idx}`).value;
+            // Directly modify the item at original index
+            const newHistory = [...t.history];
+            if(newHistory[idx]) {
+                newHistory[idx] = { ...newHistory[idx], note: newContent };
+            } else {
+                return; // Index out of bounds?
+            }
 
             try {
                 await updateDoc(doc(db, "users", currentUser.uid, "trades", tradeId), { history: newHistory });
-                // Note: The UI will update automatically via onSnapshot, but we might want to manually toggle back if snapshot is slow.
-                // However, since onSnapshot calls render, viewDetails might be closed or refreshed.
-                // Actually viewDetails is NOT re-rendered by onSnapshot unless we call viewDetails again.
-                // But onSnapshot calls renderPortfolio/History.
-                // Let's manually update the UI in the modal to reflect change immediately without closing it.
-
-                // We need to update the global trades array temporarily? No, onSnapshot will handle it.
-                // But viewDetails shows static HTML generated at click time.
-                // So we should re-render viewDetails with the new data?
-                // Or just update the DOM.
 
                 // Simple DOM update:
-                const viewEl = document.getElementById(`note-view-${timestamp}`);
+                const viewEl = document.getElementById(`note-view-${idx}`);
                 const pEl = viewEl.querySelector('p');
                 if (newContent) {
                     pEl.textContent = newContent;
                 } else {
                     pEl.innerHTML = '<span class="text-slate-400 italic font-normal text-xs">無備註</span>';
                 }
-                document.getElementById(`note-input-${timestamp}`).value = newContent;
+                document.getElementById(`note-input-${idx}`).value = newContent;
 
-                window.toggleEditNote(tradeId, timestamp);
+                window.toggleEditNote(tradeId, idx);
             } catch(e) {
                 console.error("Error updating note:", e);
                 alert("更新失敗");
@@ -1325,7 +1328,7 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isSelected = dateStr === window.selectedDate;
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const isToday = dateStr === window.getLocalISODate();
                 const hasLog = dailyLogs[dateStr] && dailyLogs[dateStr].content;
                 const hasTrade = trades.some(t => t.entryDate === dateStr || t.exitDate === dateStr || t.history.some(h => h.date === dateStr));
 
