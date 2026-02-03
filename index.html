@@ -249,9 +249,23 @@
                                 <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">名稱</label><input type="text" id="symbolName" placeholder="台積電" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">單價</label><input type="number" inputmode="decimal" id="entryPrice" step="0.01" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
+                            <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">單價</label><input type="number" inputmode="decimal" id="entryPrice" step="0.01" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold" oninput="updateRiskCalc()"></div>
                                 <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">股數</label><input type="number" inputmode="numeric" id="quantity" step="1" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
                             </div>
+
+                        <div id="risk-calc-container" class="hidden grid grid-cols-2 gap-3">
+                            <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
+                                <p class="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">建議停損 (SL)</p>
+                                <p id="calc-sl-price" class="text-base font-black text-red-600 dark:text-red-400">--</p>
+                                <p id="calc-sl-pct" class="text-[9px] font-bold text-red-400">--</p>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-100 dark:border-green-900/30">
+                                <p class="text-[9px] font-black text-green-500 uppercase tracking-widest mb-1">目標停利 (TP)</p>
+                                <p id="calc-tp-price" class="text-base font-black text-green-600 dark:text-green-400">--</p>
+                                <p id="calc-tp-pct" class="text-[9px] font-bold text-green-500">--</p>
+                            </div>
+                        </div>
+
                             <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">技術圖</label><div class="relative"><input type="file" id="tradeScreenshot" accept="image/*" class="hidden" onchange="handleImageUpload(event)"><label for="tradeScreenshot" class="cursor-pointer w-full bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-3.5 flex items-center justify-center gap-3 transition-colors group btn-press"><div id="upload-placeholder" class="flex items-center gap-2 text-slate-400 group-hover:text-indigo-500"><i data-lucide="image-plus" class="w-5 h-5"></i><span class="text-sm font-bold">上傳/拍攝</span></div><div id="upload-preview-container" class="hidden flex items-center gap-3 w-full"><img id="upload-preview" src="" class="h-10 w-10 object-cover rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm"><span class="text-sm font-bold text-green-600 dark:text-green-400 flex-1">Ready</span><span class="text-xs text-slate-400 underline font-bold hover:text-red-500 p-2" onclick="clearImage(event)">重選</span></div></label></div></div>
                             <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">日期</label><input type="date" id="entryDate" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold appearance-none"></div>
                             
@@ -1118,8 +1132,48 @@
         
         window.selectPersona = (p) => { window.currentPersona=p; document.querySelectorAll('.persona-card').forEach(c=>c.classList.remove('selected')); document.getElementById(`p-${p}`).classList.add('selected'); document.getElementById('form-container').classList.remove('hidden'); document.getElementById('persona-indicator').style.backgroundColor=personas[p].color; const container=document.getElementById('subStrategyContainer'); container.innerHTML = personas[p].options.map((o,i)=>`<div onclick="selectStrategy(${i})" id="strat-${i}" class="cursor-pointer bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-3 rounded-2xl flex items-center gap-2 btn-press"><div class="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center strategy-check"><div class="w-2 h-2 rounded-full bg-white opacity-0 strategy-dot"></div></div><span class="font-black text-xs text-slate-600 dark:text-slate-300">${o.name}</span></div>`).join(''); selectStrategy(0); document.getElementById('entryDate').valueAsDate = new Date(); selectWind('entry','強風'); };
         window.selectStrategy = (i) => { document.getElementById('subStrategyInput').value=i; document.querySelectorAll('#subStrategyContainer > div').forEach(c=>{ c.classList.remove('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20'); c.querySelector('.strategy-check').classList.remove('bg-indigo-600','border-indigo-600'); c.querySelector('.strategy-dot').classList.remove('opacity-100'); }); const s=document.getElementById(`strat-${i}`); if(s){ s.classList.add('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20'); const c=s.querySelector('.strategy-check'); c.classList.add('bg-indigo-600','border-indigo-600'); c.querySelector('.strategy-dot').classList.add('opacity-100'); updateSubSop(); } };
-        window.updateSubSop = () => { const i=document.getElementById('subStrategyInput').value; if(i==="")return; const o=personas[window.currentPersona].options[i]; document.getElementById('persona-summary-text').textContent=o.summary; document.getElementById('rule-sl').textContent=o.sl; document.getElementById('rule-tp').textContent=o.tp; };
+        window.updateSubSop = () => { const i=document.getElementById('subStrategyInput').value; if(i==="")return; const o=personas[window.currentPersona].options[i]; document.getElementById('persona-summary-text').textContent=o.summary; document.getElementById('rule-sl').textContent=o.sl; document.getElementById('rule-tp').textContent=o.tp; window.updateRiskCalc(); };
         
+        window.updateRiskCalc = () => {
+            const price = parseFloat(document.getElementById('entryPrice').value);
+            const stratIdx = document.getElementById('subStrategyInput').value;
+            const container = document.getElementById('risk-calc-container');
+
+            if (!price || stratIdx === "" || !window.currentPersona) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const option = personas[window.currentPersona].options[stratIdx];
+            // If no percentage rules defined, hide
+            if (!option.sl_pct && !option.tp_pct) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+
+            // SL Calculation
+            if (option.sl_pct) {
+                const slPrice = price * (1 - option.sl_pct);
+                document.getElementById('calc-sl-price').textContent = '$' + slPrice.toFixed(2);
+                document.getElementById('calc-sl-pct').textContent = `-${(option.sl_pct * 100).toFixed(1)}%`;
+            } else {
+                document.getElementById('calc-sl-price').textContent = '--';
+                document.getElementById('calc-sl-pct').textContent = '';
+            }
+
+            // TP Calculation
+            if (option.tp_pct) {
+                const tpPrice = price * (1 + option.tp_pct);
+                document.getElementById('calc-tp-price').textContent = '$' + tpPrice.toFixed(2);
+                document.getElementById('calc-tp-pct').textContent = `+${(option.tp_pct * 100).toFixed(1)}%`;
+            } else {
+                document.getElementById('calc-tp-price').textContent = '--';
+                document.getElementById('calc-tp-pct').textContent = '';
+            }
+        };
+
         window.handleImageUpload = (e) => { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ const img=new Image(); img.src=ev.target.result; img.onload=()=>{ const c=document.createElement('canvas'); const ctx=c.getContext('2d'); const s=800/img.width; const w=(s<1)?800:img.width; const h=(s<1)?img.height*s:img.height; c.width=w; c.height=h; ctx.drawImage(img,0,0,w,h); window.tempScreenshot=c.toDataURL('image/jpeg',0.5); document.getElementById('upload-preview').src=window.tempScreenshot; document.getElementById('upload-placeholder').classList.add('hidden'); document.getElementById('upload-preview-container').classList.remove('hidden'); }}; r.readAsDataURL(f); };
         window.clearImage = (e) => { e.preventDefault(); window.tempScreenshot=null; document.getElementById('tradeScreenshot').value=''; document.getElementById('upload-preview').src=''; document.getElementById('upload-preview-container').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); };
 
@@ -1794,13 +1848,16 @@
                 name: '強勢日(追漲策略)', 
                 summary: '核心：頻繁進出。重點：選營收YOY或成值最強標的，第一/二根紅K，週MACD向上，建議10:00後觀察。', 
                 sl: '1. 買進3日內未脫離成本(-1~2%)\n2. 虧損達5%', 
-                tp: '1. 獲利10%以上(放出風箏)\n2. 收盤跌破5日/10日線' 
+                tp: '1. 獲利10%以上(放出風箏)\n2. 收盤跌破5日/10日線',
+                sl_pct: 0.05,
+                tp_pct: 0.10
             },
             { 
                 name: '日拉回(低吸策略)', 
                 summary: '核心：飆股休息。重點：拉回5日線附近買進。建議分3次買進建立成本。', 
                 sl: '1. 3~5天沒發動下一波攻勢\n2. 跌破5日線', 
-                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線',
+                tp_pct: 0.10
             }
         ]
     },
@@ -1812,13 +1869,16 @@
                 name: '強勢週(趨勢策略)', 
                 summary: '核心：MACD趨勢。重點：參與日MACD剛翻多1-2天，確認週MACD向上。建議11:30後出手。', 
                 sl: '1. 買進4日內未脫離成本(-1~3%)\n2. 收盤跌破5日線', 
-                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線',
+                sl_pct: 0.03,
+                tp_pct: 0.10
             },
             { 
                 name: '週趨勢(拉回策略)', 
                 summary: '核心：易漲循環。重點：參與週MACD剛翻多1-2週，拉回5日線買下跌。', 
                 sl: '1. 當週五收盤低於上週五\n2. 跌破10日線', 
-                tp: '1. 獲利10%以上\n2. 週MACD紅柱縮短(週五)\n3. 跌破5週線(5MA)' 
+                tp: '1. 獲利10%以上\n2. 週MACD紅柱縮短(週五)\n3. 跌破5週線(5MA)',
+                tp_pct: 0.10
             }
         ]
     },
