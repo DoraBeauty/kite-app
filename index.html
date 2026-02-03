@@ -1891,7 +1891,9 @@
                 const isLive = !!window.livePrices[t.symbolCode]; 
                 const marketValue = livePrice * t.totalQuantity;
                 const costValue = t.averagePrice * t.totalQuantity; 
-                const unPnl = marketValue - costValue;
+                // 扣除預估賣出成本 (手續費 + 交易稅)
+                const sellCost = window.calculateCost(livePrice, t.totalQuantity, 'sell');
+                const unPnl = marketValue - costValue - sellCost;
                 const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
                 
                 const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
@@ -2084,7 +2086,9 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                     const currentPrice = window.livePrices[t.symbolCode] || t.averagePrice;
                     const marketVal = currentPrice * t.totalQuantity;
                     const costVal = t.averagePrice * t.totalQuantity;
-                    tUnrealized += (marketVal - costVal);
+                    // 扣除預估賣出成本
+                    const sellCost = window.calculateCost(currentPrice, t.totalQuantity, 'sell');
+                    tUnrealized += (marketVal - costVal - sellCost);
                     tOpenCost += costVal;
                 }
             });
