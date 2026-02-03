@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>風箏選股交易紀錄系統 (Cloud v1.5 Fee Edition)</title>
+    <title>風箏選股交易紀錄系統 (Cloud v1.5.1 Fee Edition)</title>
     <link rel="apple-touch-icon" href="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">    
@@ -733,7 +733,7 @@
         // --- 手續費計算核心 ---
         window.getFeeSettings = () => {
             const saved = localStorage.getItem('kite_fee_settings');
-            const defaults = { discount: 1.7, minFee: 1, initialCapital: 1000000 };
+            const defaults = { discount: 2.8, minFee: 1, initialCapital: 1000000 };
             
             if (saved) {
                 try {
