@@ -1428,7 +1428,7 @@
                             <span class="text-xs font-black uppercase px-2 py-1 rounded bg-white/50">${m.label}</span>
                             <span class="text-xs font-bold">${m.desc}</span>
                         </div>
-                        <div class="text-[10px] font-bold opacity-70">OTC: ${m.otc.toFixed(1)} / MA20: ${m.ma20.toFixed(1)}</div>
+                        <div class="text-[10px] font-bold opacity-70">OTC: ${m.otc.toFixed(1)} / MA: ${m.ma20.toFixed(1)} / MACD: ${m.macdHist}</div>
                     `;
                     // Insert before the textarea
                     logContainer.insertBefore(windDiv, document.getElementById('journal-content'));
@@ -1753,31 +1753,48 @@
         };
 
         // --- 🚀 風度系統 (Wind Status System) ---
-        window.calculateWindStatus = (otc, ma20) => {
-            const diffPct = ((otc - ma20) / ma20) * 100;
+        window.calculateWindStatus = (otc, ma20, macdHist, prevMacdHist) => {
+            // 1. Determine Cycle (Good vs Bad) based on OTC vs 20MA
+            const isGoodCycle = otc >= ma20;
+            const isMacdGrowing = macdHist > prevMacdHist;
 
-            // Borderline logic (within 0.3%)
-            if (Math.abs(diffPct) < 0.3) {
-                 return { code: 'border', label: '交界', desc: '循環交界，客觀執行', class: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30' };
+            if (isGoodCycle) {
+                if (isMacdGrowing) {
+                    // OTC >= 20MA && MACD > Prev -> 強風
+                    return { code: 'strong', label: '強風', desc: '行情：強風 (勝率偏高)', class: 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/30' };
+                } else {
+                    // OTC >= 20MA && MACD < Prev -> 亂流
+                    return { code: 'turbulent', label: '亂流', desc: '行情：亂流 (震盪/嚴守紀律)', class: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30' };
+                }
+            } else {
+                if (isMacdGrowing) {
+                    // OTC < 20MA && MACD > Prev -> 陣風
+                    return { code: 'gust', label: '陣風', desc: '行情：陣風 (嘗試交易)', class: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30' };
+                } else {
+                    // OTC < 20MA && MACD < Prev -> 無風
+                    return { code: 'none', label: '無風', desc: '行情：無風 (多做多賠)', class: 'text-slate-500 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' };
+                }
             }
-
-            // Good Cycle (OTC >= 20MA)
-            if (otc >= ma20) {
-                return { code: 'good', label: '積極', desc: '積極試著賺錢', class: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30' };
-            }
-
-            // Bad Cycle (OTC < 20MA) -> Warning Red
-            return { code: 'bad', label: '保守', desc: '保守/休息', class: 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/30' };
         };
 
         window.fetchMarketData = async () => {
-            // 模擬抓取：回傳隨機但合理的 OTC 與 20MA 數據
+            // 模擬抓取：回傳隨機但合理的 OTC, 20MA, MACD 數據
             return new Promise(resolve => {
                 setTimeout(() => {
                     const base = 220 + (Math.random() * 40 - 20); // 200-240
                     const trend = Math.random() > 0.5 ? 1 : -1;
                     const ma = base + (Math.random() * 10 * trend); // +/- deviation
-                    resolve({ otc: parseFloat(base.toFixed(2)), ma20: parseFloat(ma.toFixed(2)) });
+
+                    // Simulate MACD Histogram (Today vs Yesterday)
+                    const macdHist = (Math.random() * 2 - 1).toFixed(2); // -1.00 to 1.00
+                    const prevMacdHist = (Math.random() * 2 - 1).toFixed(2);
+
+                    resolve({
+                        otc: parseFloat(base.toFixed(2)),
+                        ma20: parseFloat(ma.toFixed(2)),
+                        macdHist: parseFloat(macdHist),
+                        prevMacdHist: parseFloat(prevMacdHist)
+                    });
                 }, 800);
             });
         };
@@ -1799,11 +1816,13 @@
              try {
                  console.log("正在抓取風度數據...");
                  const data = await window.fetchMarketData();
-                 const status = window.calculateWindStatus(data.otc, data.ma20);
+                 const status = window.calculateWindStatus(data.otc, data.ma20, data.macdHist, data.prevMacdHist);
 
                  const statusData = {
                      otc: data.otc,
                      ma20: data.ma20,
+                     macdHist: data.macdHist,
+                     prevMacdHist: data.prevMacdHist,
                      ...status,
                      updatedAt: Date.now()
                  };
