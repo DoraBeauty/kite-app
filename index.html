@@ -183,6 +183,8 @@
                     <i data-lucide="save" class="w-4 h-4"></i> 儲存日誌
                 </button>
             </div>
+
+            <div id="journal-trade-list" class="hidden space-y-3 pb-4"></div>
         </div>
 
         <div id="page-add" class="space-y-5 animate-in">
@@ -1363,22 +1365,71 @@
         };
 
         window.selectDate = (dateStr) => {
-            window.selectedDate = dateStr;
-            renderCalendar(); // Re-render to update selected style
+            try {
+                window.selectedDate = dateStr;
+                renderCalendar(); // Re-render to update selected style
 
-            document.getElementById('daily-log-editor').classList.remove('hidden');
-            document.getElementById('journal-date-title').textContent = dateStr.replace(/-/g, '/');
+                document.getElementById('daily-log-editor').classList.remove('hidden');
+                document.getElementById('journal-date-title').textContent = dateStr.replace(/-/g, '/');
 
-            // Check content
-            const log = dailyLogs[dateStr];
-            document.getElementById('journal-content').value = log ? log.content : '';
+                // Check content
+                const log = dailyLogs[dateStr];
+                document.getElementById('journal-content').value = log ? log.content : '';
 
-            // Status text
-            const tradeCount = trades.filter(t => t.entryDate === dateStr || t.exitDate === dateStr || t.history.some(h => h.date === dateStr)).length;
-            const statusText = [];
-            if(tradeCount > 0) statusText.push(`${tradeCount} 筆交易活動`);
-            if(log) statusText.push(`已寫日誌`);
-            document.getElementById('journal-status').textContent = statusText.join(' • ');
+                // Find activities for this date
+                const activities = [];
+                trades.forEach(t => {
+                    t.history.forEach(h => {
+                        if (h.date === dateStr) {
+                            activities.push({ ...h, symbolCode: t.symbolCode, symbolName: t.symbolName, tradeId: t.id });
+                        }
+                    });
+                });
+
+                console.log(`Date: ${dateStr}, Activities:`, activities);
+
+                // Status text
+                const statusText = [];
+                if(activities.length > 0) statusText.push(`${activities.length} 筆交易明細`);
+                if(log) statusText.push(`已寫日誌`);
+                document.getElementById('journal-status').textContent = statusText.join(' • ');
+
+                // Render Trade List
+                const listContainer = document.getElementById('journal-trade-list');
+                if (activities.length > 0) {
+                    listContainer.classList.remove('hidden');
+                    listContainer.innerHTML = activities.map(item => {
+                        const isBuy = item.type === 'buy';
+                        const colorClass = isBuy ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500';
+                        const bgClass = isBuy ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'bg-red-50 dark:bg-red-900/20';
+                        const typeText = isBuy ? '買進' : '賣出';
+
+                        return `
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 cursor-pointer btn-press" onclick="viewDetails('${item.tradeId}')">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded ${bgClass} ${colorClass}">${typeText}</span>
+                                    <span class="text-sm font-black text-slate-700 dark:text-slate-200">${item.symbolName}</span>
+                                    <span class="text-xs font-bold text-slate-400">${item.symbolCode}</span>
+                                </div>
+                                <span class="text-sm font-black text-slate-800 dark:text-slate-100">$${item.price} <span class="text-slate-300 text-xs">x</span> ${item.quantity}</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">${window.escapeHtml(item.note) || '<span class="text-slate-300 italic">無理由/備註</span>'}</p>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    // Optional: Scroll to list if it was hidden before
+                    // listContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    listContainer.classList.add('hidden');
+                    listContainer.innerHTML = '';
+                }
+            } catch (e) {
+                console.error("Error in selectDate:", e);
+                alert("載入日期資料時發生錯誤，請重試。");
+            }
         };
 
         window.saveDailyLog = async () => {
