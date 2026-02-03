@@ -1413,26 +1413,45 @@
                 const log = dailyLogs[dateStr];
                 document.getElementById('journal-content').value = log ? log.content : '';
 
-                // Show Wind Status in Log Section
+                // --- 🚀 Manual Wind Selection Logic ---
                 const windStatusEl = document.getElementById('journal-wind-display');
                 if (windStatusEl) windStatusEl.remove(); // Clean up prev
 
-                if (log && log.marketStatus) {
+                const logContainer = document.querySelector('#journal-content').parentNode;
+                const windDiv = document.createElement('div');
+                windDiv.id = 'journal-wind-display';
+                windDiv.className = "mb-4";
+
+                const currentWindLabel = log?.marketStatus?.label;
+                const isAuto = log?.marketStatus && !log.marketStatus.manual && log.marketStatus.otc;
+
+                // Define wind options
+                const windOpts = [
+                    { label: '強風', class: 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' },
+                    { label: '亂流', class: 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' },
+                    { label: '陣風', class: 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' },
+                    { label: '無風', class: 'border-slate-400 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' }
+                ];
+
+                let buttonsHtml = windOpts.map(w => {
+                    const isActive = currentWindLabel === w.label;
+                    const activeClass = isActive ? `ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 ${w.class}` : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 opacity-60 hover:opacity-100';
+                    return `<button onclick="window.setManualWind('${w.label}')" class="flex-1 py-2 rounded-xl text-xs font-black border-2 transition-all ${activeClass}">${w.label}</button>`;
+                }).join('');
+
+                let infoHtml = '';
+                if(isAuto) {
                     const m = log.marketStatus;
-                    const logContainer = document.querySelector('#journal-content').parentNode;
-                    const windDiv = document.createElement('div');
-                    windDiv.id = 'journal-wind-display';
-                    windDiv.className = `mb-3 p-3 rounded-2xl border flex items-center justify-between ${m.class}`;
-                    windDiv.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black uppercase px-2 py-1 rounded bg-white/50">${m.label}</span>
-                            <span class="text-xs font-bold">${m.desc}</span>
-                        </div>
-                        <div class="text-[10px] font-bold opacity-70">OTC: ${m.otc.toFixed(1)} / MA: ${m.ma20.toFixed(1)} / MACD: ${m.macdHist}</div>
-                    `;
-                    // Insert before the textarea
-                    logContainer.insertBefore(windDiv, document.getElementById('journal-content'));
+                    infoHtml = `<div class="text-[10px] text-slate-400 text-center mt-2 font-bold flex justify-center gap-3">
+                        <span>OTC: ${m.otc.toFixed(1)}</span>
+                        <span>MA: ${m.ma20.toFixed(1)}</span>
+                        <span>MACD: ${m.macdHist}</span>
+                    </div>`;
                 }
+
+                windDiv.innerHTML = `<div class="flex gap-2">${buttonsHtml}</div>${infoHtml}`;
+                logContainer.insertBefore(windDiv, document.getElementById('journal-content'));
+                // --------------------------------------
 
                 // Find activities for this date
                 const activities = [];
@@ -1500,12 +1519,61 @@
             }
         };
 
+        window.setManualWind = async (label) => {
+            if(!currentUser) return alert("請先登入");
+            const dateStr = window.selectedDate;
+
+            // Define static data for manual entry
+            const windMap = {
+                '強風': { code: 'strong', desc: '手動設定：強風', class: 'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/30' },
+                '亂流': { code: 'turbulent', desc: '手動設定：亂流', class: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/30' },
+                '陣風': { code: 'gust', desc: '手動設定：陣風', class: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30' },
+                '無風': { code: 'none', desc: '手動設定：無風', class: 'text-slate-500 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700' }
+            };
+
+            const w = windMap[label];
+            if(!w) return;
+
+            // Optimistic Update
+            if(!dailyLogs[dateStr]) dailyLogs[dateStr] = {};
+
+            // Capture unsaved text content to prevent data loss on re-render
+            const currentContent = document.getElementById('journal-content').value;
+            if (currentContent !== undefined) {
+                dailyLogs[dateStr].content = currentContent;
+            }
+
+            dailyLogs[dateStr].marketStatus = {
+                ...w,
+                label: label,
+                manual: true,
+                otc: 0, ma20: 0, macdHist: 0, prevMacdHist: 0 // Dummy values for manual
+            };
+
+            // Refresh UI immediately
+            renderCalendar();
+            selectDate(dateStr);
+
+            // Save to DB
+            try {
+                await setDoc(doc(db, "users", currentUser.uid, "dailyLogs", dateStr), {
+                    marketStatus: dailyLogs[dateStr].marketStatus,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                console.log("Manual wind saved:", label);
+            } catch(e) {
+                console.error("Failed to save manual wind", e);
+                alert("儲存失敗");
+            }
+        };
+
         window.saveDailyLog = async () => {
             if(!currentUser) return alert("請先登入");
             const dateStr = window.selectedDate;
             const content = document.getElementById('journal-content').value;
 
-            const btn = document.querySelector('#journal-details-container button'); // Updated selector
+            // Use specific ID to avoid selecting the wrong button if I added new ones
+            const btn = document.querySelector('#journal-details-container button[onclick="saveDailyLog()"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 儲存中...`;
             lucide.createIcons();
@@ -1517,9 +1585,14 @@
                 }, { merge: true });
 
                 // Update local cache immediately for better UX
-                dailyLogs[dateStr] = { ...dailyLogs[dateStr], content: content };
+                if(!dailyLogs[dateStr]) dailyLogs[dateStr] = {};
+                dailyLogs[dateStr].content = content;
+
                 renderCalendar();
-                selectDate(dateStr); // Refresh status text
+                // Don't re-selectDate here to avoid flickering input focus
+                // Just update status text
+                const statusText = `Last saved: ${new Date().toLocaleTimeString()}`;
+                document.getElementById('journal-status').textContent = statusText;
 
                 // Show success feedback
                 btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> 已儲存`;
