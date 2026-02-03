@@ -173,18 +173,36 @@
             <!-- Calendar UI will be rendered here -->
             <div id="calendar-container" class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800"></div>
 
-            <div id="daily-log-editor" class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800 hidden animate-in slide-in-from-bottom-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="journal-date-title" class="text-lg font-black text-slate-800 dark:text-slate-100">--</h3>
-                    <div id="journal-status" class="text-xs font-bold text-slate-400"></div>
-                </div>
-                <textarea id="journal-content" rows="6" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 text-base focus:ring-2 focus:ring-indigo-500 font-bold mb-4" placeholder="寫下今天的交易心得..."></textarea>
-                <button onclick="saveDailyLog()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none btn-press flex items-center justify-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> 儲存日誌
-                </button>
-            </div>
+            <div id="journal-details-container" class="hidden space-y-6 animate-in slide-in-from-bottom-4">
 
-            <div id="journal-trade-list" class="hidden space-y-3 pb-4"></div>
+                <!-- Section 1: Trade List (Moved to Top) -->
+                <div>
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i data-lucide="list-checks" class="w-5 h-5 text-indigo-500"></i> 當日交易明細
+                        </h3>
+                        <span id="journal-trade-count" class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">--</span>
+                    </div>
+                    <div id="journal-trade-list" class="space-y-3"></div>
+                </div>
+
+                <!-- Section 2: Daily Log Editor (Moved to Bottom) -->
+                <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5 text-indigo-500"></i> 交易心得日記
+                        </h3>
+                        <h3 id="journal-date-title" class="text-xs font-black text-slate-400">--</h3>
+                    </div>
+                    <textarea id="journal-content" rows="6" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 text-base focus:ring-2 focus:ring-indigo-500 font-bold mb-4 resize-none leading-relaxed" placeholder="記錄當下的情緒、策略執行狀況或明日規劃..."></textarea>
+                    <button onclick="saveDailyLog()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none btn-press flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="save" class="w-4 h-4"></i> 儲存日誌
+                    </button>
+                    <div id="journal-status" class="text-center mt-2 text-[10px] font-bold text-slate-300"></div>
+                </div>
+
+            </div>
         </div>
 
         <div id="page-add" class="space-y-5 animate-in">
@@ -1369,7 +1387,10 @@
                 window.selectedDate = dateStr;
                 renderCalendar(); // Re-render to update selected style
 
-                document.getElementById('daily-log-editor').classList.remove('hidden');
+                // Show the main container
+                document.getElementById('journal-details-container').classList.remove('hidden');
+
+                // Update Date Title for Log Section
                 document.getElementById('journal-date-title').textContent = dateStr.replace(/-/g, '/');
 
                 // Check content
@@ -1388,16 +1409,18 @@
 
                 console.log(`Date: ${dateStr}, Activities:`, activities);
 
-                // Status text
+                // Update Status Text in Log Section
                 const statusText = [];
-                if(activities.length > 0) statusText.push(`${activities.length} 筆交易明細`);
-                if(log) statusText.push(`已寫日誌`);
-                document.getElementById('journal-status').textContent = statusText.join(' • ');
+                if(log) statusText.push(`Last saved: ${log.updatedAt ? new Date(log.updatedAt.seconds * 1000).toLocaleTimeString() : 'Unknown'}`);
+                document.getElementById('journal-status').textContent = statusText.length > 0 ? statusText.join('') : '';
+
+                // Update Trade Count
+                document.getElementById('journal-trade-count').textContent = `${activities.length} 筆`;
 
                 // Render Trade List
                 const listContainer = document.getElementById('journal-trade-list');
+
                 if (activities.length > 0) {
-                    listContainer.classList.remove('hidden');
                     listContainer.innerHTML = activities.map(item => {
                         const isBuy = item.type === 'buy';
                         const colorClass = isBuy ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500';
@@ -1405,7 +1428,7 @@
                         const typeText = isBuy ? '買進' : '賣出';
 
                         return `
-                        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 cursor-pointer btn-press" onclick="viewDetails('${item.tradeId}')">
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 cursor-pointer btn-press transition-colors hover:border-indigo-300 dark:hover:border-indigo-700" onclick="viewDetails('${item.tradeId}')">
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-black px-2 py-0.5 rounded ${bgClass} ${colorClass}">${typeText}</span>
@@ -1414,18 +1437,26 @@
                                 </div>
                                 <span class="text-sm font-black text-slate-800 dark:text-slate-100">$${item.price} <span class="text-slate-300 text-xs">x</span> ${item.quantity}</span>
                             </div>
-                            <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">${window.escapeHtml(item.note) || '<span class="text-slate-300 italic">無理由/備註</span>'}</p>
+                            <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">${window.escapeHtml(item.note) || '<span class="text-slate-300 italic font-normal">未填寫交易理由或備註</span>'}</p>
                             </div>
                         </div>`;
                     }).join('');
-
-                    // Optional: Scroll to list if it was hidden before
-                    // listContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 } else {
-                    listContainer.classList.add('hidden');
-                    listContainer.innerHTML = '';
+                    // Empty State
+                    listContainer.innerHTML = `
+                        <div class="text-center py-8 bg-slate-50 dark:bg-slate-800/30 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <div class="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-300">
+                                <i data-lucide="calendar-x" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs font-black text-slate-400">本日無交易紀錄</p>
+                        </div>
+                    `;
                 }
+
+                // Re-initialize icons for new content
+                lucide.createIcons();
+
             } catch (e) {
                 console.error("Error in selectDate:", e);
                 alert("載入日期資料時發生錯誤，請重試。");
@@ -1437,7 +1468,7 @@
             const dateStr = window.selectedDate;
             const content = document.getElementById('journal-content').value;
 
-            const btn = document.querySelector('#daily-log-editor button');
+            const btn = document.querySelector('#journal-details-container button'); // Updated selector
             const originalText = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 儲存中...`;
             lucide.createIcons();
