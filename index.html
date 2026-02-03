@@ -1243,8 +1243,13 @@
         window.viewDetails = (id) => { 
             const t = trades.find(item => item.id === id); 
             if(!t) return; 
-            document.getElementById('detail-title').textContent = `${t.symbolCode} ${t.symbolName}`; 
-            document.getElementById('detail-subtitle').textContent = `均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`; 
+            const p = personas[t.persona];
+            document.getElementById('detail-title').innerHTML = `
+                <span class="inline-flex items-center gap-2 align-middle">
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded text-white shadow-sm align-middle" style="background-color: ${p.color}">${p.title}</span>
+                    <span>${t.symbolCode} ${t.symbolName}</span>
+                </span>`;
+            document.getElementById('detail-subtitle').textContent = `${t.strategyName} | 均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`;
             const list = document.getElementById('detail-list'); 
             let currentCost = 0, currentQty = 0, avgPrice = 0; 
 
