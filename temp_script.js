@@ -1,523 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>風箏選股交易紀錄系統 (Cloud v1.5 Fee Edition)</title>
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">    
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        indigo: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81', 950: '#1e1b4b', }
-                    },
-                    screens: { 'xs': '375px' }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Inter', 'Noto+Sans+TC', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; touch-action: manipulation; overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
-        input, textarea { -webkit-user-select: text; user-select: text; font-size: 16px !important; }
-        .btn-press:active { transform: scale(0.96); transition: transform 0.1s; }
-        .persona-card, .wind-card { cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        .persona-card.selected { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        #p-freelancer.selected { border-color: #3b82f6; background-color: #eff6ff; }
-        #p-office.selected { border-color: #6366f1; background-color: #eef2ff; }
-        #p-boss.selected { border-color: #a855f7; background-color: #faf5ff; }
-        .dark #p-freelancer.selected { background-color: rgba(59, 130, 246, 0.15); border-color: #60a5fa; }
-        .dark #p-office.selected { background-color: rgba(99, 102, 241, 0.15); border-color: #818cf8; }
-        .dark #p-boss.selected { background-color: rgba(168, 85, 247, 0.15); border-color: #c084fc; }
-        .wind-card.selected.強風 { border-color: #ef4444; background-color: #fef2f2; }
-        .wind-card.selected.亂流 { border-color: #f59e0b; background-color: #fffbeb; }
-        .wind-card.selected.陣風 { border-color: #3b82f6; background-color: #eff6ff; }
-        .wind-card.selected.無風 { border-color: #94a3b8; background-color: #f8fafc; }
-        .dark .wind-card.selected.強風 { background-color: rgba(239, 68, 68, 0.15); border-color: #f87171; }
-        .dark .wind-card.selected.亂流 { background-color: rgba(245, 158, 11, 0.15); border-color: #fbbf24; }
-        .dark .wind-card.selected.陣風 { background-color: rgba(59, 130, 246, 0.15); border-color: #60a5fa; }
-        .dark .wind-card.selected.無風 { background-color: rgba(148, 163, 184, 0.15); border-color: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .smooth-scroll { -webkit-overflow-scrolling: touch; }
-        .tab-button.active { background-color: white; color: #4f46e5; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .dark .tab-button.active { background-color: #312e81; color: #e0e7ff; }
-        .blur-login { filter: blur(8px); pointer-events: none; user-select: none; }
-        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
-        .matrix-cell { transition: all 0.2s; }
-        .modal-content { max-height: 85dvh; }
-        details > summary { list-style: none; }
-        details > summary::-webkit-details-marker { display: none; }
-        details[open] summary ~ * { animation: slideDown 0.2s ease-in-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body class="min-h-[100dvh] pb-safe bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative overflow-x-hidden">
 
-    <div id="login-overlay" class="fixed inset-0 z-[500] flex flex-col items-center justify-center p-6 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md transition-all duration-500 h-[100dvh]">
-        <div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl p-8 border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
-            <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/30 mb-6 overflow-hidden">
-                    <img src="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png" class="w-full h-full object-cover scale-150">
-                </div>                <h1 class="text-3xl font-black mb-2 text-red-600 dark:text-red-500">交易紀錄</h1>
-                <p class="text-sm text-slate-400 font-bold uppercase tracking-widest">Cloud Sync Active</p>
-            </div>
-            <div class="space-y-4">
-                <button onclick="handleGoogleLogin()" id="btn-google" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-3 shadow-sm group text-lg btn-press">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    Google 帳號登入
-                </button>
-                <div class="text-center">
-                    <p class="text-[10px] text-slate-400 font-bold">登入後資料將自動同步至雲端</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="app-content" class="max-w-5xl mx-auto px-4 py-4 transition-all duration-500 blur-login pb-24">
-        <header class="mb-5">
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center justify-between w-full">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 xs:w-12 xs:h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-500/20">
-                            <img src="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png" class="w-full h-full object-cover scale-150">
-                        </div>                        <div><h1 class="text-2xl xs:text-3xl font-black tracking-tight text-red-600 dark:text-red-500">交易紀錄</h1><p class="text-[10px] xs:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Cloud Online</p></div>
-                    </div>
-                    <div class="flex items-center gap-2 relative">
-                        <div class="relative">
-                            <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl pl-1 pr-3 py-1.5 border border-slate-200 dark:border-slate-800 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all btn-press" id="user-btn">
-                                <img id="user-avatar" src="" class="w-8 h-8 rounded-xl bg-slate-200 object-cover">
-                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 ml-1"></i>
-                            </button>
-                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-[150] overflow-hidden">
-                                <div class="px-5 py-4 border-b border-slate-50 dark:border-slate-800">
-                                    <p class="text-xs font-bold text-slate-400 uppercase">帳號</p>
-                                    <p class="text-sm font-black truncate" id="menu-user-name">Loading...</p>
-                                </div>
-                                <button onclick="openSettingsModal()" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800">
-                                    <i data-lucide="settings-2" class="w-4 h-4 text-slate-400"></i> 手續費設定
-                                </button>
-                                <button onclick="handleLogout()" class="w-full px-5 py-4 text-left text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"><i data-lucide="log-out" class="w-4 h-4"></i> 登出帳號</button>
-                            </div>
-                        </div>
-                        <div class="relative">
-                            <button onclick="toggleThemeMenu()" id="theme-toggle-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
-                                <i data-lucide="sun" id="theme-icon-light" class="w-5 h-5 text-amber-500 hidden"></i><i data-lucide="moon" id="theme-icon-dark" class="w-5 h-5 text-indigo-400 hidden"></i><i data-lucide="monitor" id="theme-icon-auto" class="w-5 h-5 text-slate-400 hidden"></i>
-                            </button>
-                            <div id="theme-menu" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl z-[150] overflow-hidden">
-                                <button onclick="setTheme('light')" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3"><i data-lucide="sun" class="w-4 h-4 text-amber-500"></i> 晝間模式</button>
-                                <button onclick="setTheme('dark')" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3"><i data-lucide="moon" class="w-4 h-4 text-indigo-400"></i> 夜間模式</button>
-                                <button onclick="setTheme('system')" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-t dark:border-slate-800"><i data-lucide="monitor" class="w-4 h-4 text-slate-400"></i> 跟隨系統</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto no-scrollbar smooth-scroll -mx-4 px-4 pb-1">
-                    <div class="glass-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 relative overflow-hidden min-w-[340px]">
-                        <!-- 背景裝飾 -->
-                        <div class="absolute -right-8 -top-8 w-40 h-40 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
-                        
-                        <!-- 上半部：總資產與本金 -->
-                        <div class="relative z-10 mb-5 flex justify-between items-end">
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i> 目前資產總值</p>
-                                <h2 id="header-total-assets" class="text-3xl xs:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">--</h2>
-                            </div>
-                            <div class="text-right pl-4">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">投入本金</p>
-                                <p id="header-initial-capital" class="text-sm font-black text-slate-600 dark:text-slate-300">--</p>
-                            </div>
-                        </div>
-
-                        <!-- 分隔線 -->
-                        <div class="h-px bg-slate-100 dark:bg-slate-800 mb-4"></div>
-
-                        <!-- 下半部：詳細數據 Grid -->
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-4 relative z-10">
-                            <!-- 左側：股票相關 -->
-                            <div class="space-y-3">
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">持有股票市值</p><p id="header-market-value" class="text-base font-black text-slate-700 dark:text-slate-200">--</p></div>
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">未實現損益</p><div class="flex items-baseline gap-1.5"><span id="header-unrealized-pl" class="text-base font-black">--</span><span id="header-unrealized-pct" class="text-[10px] font-bold">--</span></div></div>
-                            </div>
-
-                            <!-- 右側：現金與已實現 -->
-                            <div class="space-y-3 text-right">
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">剩餘可用資金</p><p id="header-available-cash" class="text-base font-black text-indigo-600 dark:text-indigo-400">--</p></div>
-                                <div onclick="showStatsModal()" class="cursor-pointer group"><div class="flex items-center justify-end gap-1 mb-0.5"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">已實現損益</p><i data-lucide="chevron-right" class="w-3 h-3 text-slate-300 group-hover:text-indigo-500 transition-colors"></i></div><p id="header-total-pl" class="text-base font-black">--</p></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <nav class="bg-slate-200/50 dark:bg-slate-900/50 p-1.5 rounded-2xl flex mb-6 shadow-inner overflow-x-auto no-scrollbar smooth-scroll sticky top-0 z-40 backdrop-blur-md">
-            <button onclick="switchTab('add')" id="tab-add" class="tab-button active flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">新增</button>
-            <button onclick="switchTab('portfolio')" id="tab-portfolio" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">庫存</button>
-            <button onclick="switchTab('history')" id="tab-history" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">歷史</button>
-            <button onclick="switchTab('journal')" id="tab-journal" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> 日誌</button>
-            <button onclick="switchTab('strategy')" id="tab-strategy" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press"><i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> 戰情</button>
-        </nav>
-
-        <div id="page-journal" class="hidden space-y-6 animate-in pb-20">
-            <!-- Calendar UI will be rendered here -->
-            <div id="calendar-container" class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800"></div>
-
-            <div id="daily-log-editor" class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800 hidden animate-in slide-in-from-bottom-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="journal-date-title" class="text-lg font-black text-slate-800 dark:text-slate-100">--</h3>
-                    <div id="journal-status" class="text-xs font-bold text-slate-400"></div>
-                </div>
-                <textarea id="journal-content" rows="6" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 text-base focus:ring-2 focus:ring-indigo-500 font-bold mb-4" placeholder="寫下今天的交易心得..."></textarea>
-                <button onclick="saveDailyLog()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none btn-press flex items-center justify-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> 儲存日誌
-                </button>
-            </div>
-        </div>
-
-        <div id="page-add" class="space-y-5 animate-in">
-            <div class="flex items-center gap-3 mb-2 ml-1"><h2 class="text-xs font-black text-slate-400 uppercase tracking-widest">選擇操作人格</h2><button type="button" onclick="showPersonaHelp()" class="text-slate-300 hover:text-indigo-500 p-2 -m-2"><i data-lucide="info" class="w-5 h-5"></i></button></div>
-            <div class="grid grid-cols-3 gap-2 xs:gap-3">
-                <div onclick="selectPersona('freelancer')" id="p-freelancer" class="persona-card group bg-white dark:bg-slate-900 p-2 xs:p-3 md:p-5 rounded-2xl xs:rounded-3xl border-2 border-transparent shadow-sm text-center hover:shadow-md dark:shadow-none transition-all btn-press"><div class="w-10 h-10 xs:w-12 xs:h-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mx-auto mb-2 xs:mb-3"><i data-lucide="zap" class="w-5 h-5 xs:w-6 xs:h-6"></i></div><h3 class="font-black text-xs xs:text-sm">打工型</h3></div>
-                <div onclick="selectPersona('office')" id="p-office" class="persona-card group bg-white dark:bg-slate-900 p-2 xs:p-3 md:p-5 rounded-2xl xs:rounded-3xl border-2 border-transparent shadow-sm text-center hover:shadow-md dark:shadow-none transition-all btn-press"><div class="w-10 h-10 xs:w-12 xs:h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-2 xs:mb-3"><i data-lucide="briefcase" class="w-5 h-5 xs:w-6 xs:h-6"></i></div><h3 class="font-black text-xs xs:text-sm">上班族</h3></div>
-                <div onclick="selectPersona('boss')" id="p-boss" class="persona-card group bg-white dark:bg-slate-900 p-2 xs:p-3 md:p-5 rounded-2xl xs:rounded-3xl border-2 border-transparent shadow-sm text-center hover:shadow-md dark:shadow-none transition-all btn-press"><div class="w-10 h-10 xs:w-12 xs:h-12 bg-purple-50 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 mx-auto mb-2 xs:mb-3"><i data-lucide="crown" class="w-5 h-5 xs:w-6 xs:h-6"></i></div><h3 class="font-black text-xs xs:text-sm">老闆型</h3></div>
-            </div>
-            <div id="form-container" class="hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl shadow-indigo-100 dark:shadow-none p-5 md:p-8 border border-slate-50 dark:border-slate-800 overflow-hidden relative">
-                    <div id="persona-indicator" class="absolute top-0 left-0 w-1.5 h-full bg-indigo-600"></div>
-                    <form id="tradeForm" class="space-y-6">
-                        <div class="flex flex-col gap-4 border-b dark:border-slate-800 pb-5">
-                            <div class="flex justify-between items-start">
-                                <div><h2 class="text-lg xs:text-xl font-black">進場紀錄填寫</h2><p class="text-[10px] xs:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 leading-tight" id="persona-summary-text"></p></div>
-                                <div id="sop-badge" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shrink-0 ml-2">GUIDED</div>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">具體策略分支</label>
-                                <div id="subStrategyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-                                <input type="hidden" id="subStrategyInput">
-                            </div>
-                            <div class="bg-indigo-50/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-indigo-100 dark:border-slate-700/50 relative overflow-hidden">
-                                <div class="flex items-center gap-2 mb-3"><div class="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white"><i data-lucide="check" class="w-3 h-3"></i></div><h4 class="text-xs font-black text-indigo-900 dark:text-indigo-300">戰略確認</h4></div>
-                                <div class="grid grid-cols-1 gap-3 text-sm relative z-10">
-                                    <div class="bg-white/60 dark:bg-slate-900/60 p-3 rounded-xl border border-red-100 dark:border-red-900/20">
-                                        <span class="font-black text-red-500 dark:text-red-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[10px]"><i data-lucide="alert-circle" class="w-3 h-3"></i> 停損機制</span>
-                                        <p id="rule-sl" class="font-bold text-slate-700 dark:text-slate-300 leading-relaxed text-xs whitespace-pre-line">...</p>
-                                    </div>
-                                    <div class="bg-white/60 dark:bg-slate-900/60 p-3 rounded-xl border border-green-100 dark:border-green-900/20">
-                                        <span class="font-black text-green-600 dark:text-green-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[10px]"><i data-lucide="target" class="w-3 h-3"></i> 停利目標</span>
-                                        <p id="rule-tp" class="font-bold text-slate-700 dark:text-slate-300 leading-relaxed text-xs whitespace-pre-line">...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">代號</label><input type="number" inputmode="numeric" id="symbolCode" placeholder="2330" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
-                                <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">名稱</label><input type="text" id="symbolName" placeholder="台積電" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">單價</label><input type="number" inputmode="decimal" id="entryPrice" step="0.01" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
-                                <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">股數</label><input type="number" inputmode="numeric" id="quantity" step="1" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></div>
-                            </div>
-                            <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">技術圖</label><div class="relative"><input type="file" id="tradeScreenshot" accept="image/*" class="hidden" onchange="handleImageUpload(event)"><label for="tradeScreenshot" class="cursor-pointer w-full bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-3.5 flex items-center justify-center gap-3 transition-colors group btn-press"><div id="upload-placeholder" class="flex items-center gap-2 text-slate-400 group-hover:text-indigo-500"><i data-lucide="image-plus" class="w-5 h-5"></i><span class="text-sm font-bold">上傳/拍攝</span></div><div id="upload-preview-container" class="hidden flex items-center gap-3 w-full"><img id="upload-preview" src="" class="h-10 w-10 object-cover rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm"><span class="text-sm font-bold text-green-600 dark:text-green-400 flex-1">Ready</span><span class="text-xs text-slate-400 underline font-bold hover:text-red-500 p-2" onclick="clearImage(event)">重選</span></div></label></div></div>
-                            <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">日期</label><input type="date" id="entryDate" required class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold appearance-none"></div>
-                            
-                            <div class="space-y-2"><div class="flex items-center gap-1 ml-1"><label class="text-xs font-black text-slate-400 uppercase tracking-widest">環境風度</label><button type="button" onclick="showWindHelp()" class="text-slate-300 hover:text-indigo-500"><i data-lucide="info" class="w-4 h-4"></i></button></div><div class="grid grid-cols-4 gap-2" id="entryWindContainer"><div onclick="selectWind('entry', '強風')" data-wind="強風" class="wind-card 強風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center btn-press"><p class="text-xs font-black">強風</p></div><div onclick="selectWind('entry', '亂流')" data-wind="亂流" class="wind-card 亂流 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center btn-press"><p class="text-xs font-black">亂流</p></div><div onclick="selectWind('entry', '陣風')" data-wind="陣風" class="wind-card 陣風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center btn-press"><p class="text-xs font-black">陣風</p></div><div onclick="selectWind('entry', '無風')" data-wind="無風" class="wind-card 無風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center btn-press"><p class="text-xs font-black">無風</p></div></div><input type="hidden" id="entryWindInput" value="強風"></div>
-                            
-                            <div class="space-y-1.5"><label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">筆記</label><textarea id="note" rows="2" placeholder="備註..." class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-3.5 text-base focus:ring-2 focus:ring-indigo-500 font-bold"></textarea></div>
-                        </div>
-                        <button type="button" onclick="handleTradeSubmit()" class="w-full bg-slate-950 dark:bg-indigo-600 text-white text-base font-black py-4 rounded-2xl hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-3 mt-4 btn-press"><i data-lucide="save" class="w-5 h-5"></i> 儲存交易</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div id="page-portfolio" class="hidden space-y-5 animate-in"><div id="portfolio-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div></div>
-        
-        <div id="page-history" class="hidden space-y-5 animate-in"><div id="history-list" class="space-y-4 pb-20"></div></div>
-        
-        <div id="page-strategy" class="hidden space-y-6 animate-in pb-20">
-            <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-6 opacity-10"><i data-lucide="crosshair" class="w-24 h-24"></i></div>
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Strategy Insight</span>
-                    </div>
-                    <div class="grid grid-cols-1 gap-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><p class="text-indigo-200 text-[10px] font-bold uppercase mb-1">MVP 人格</p><h3 id="best-persona" class="text-2xl font-black">計算中...</h3></div>
-                            <div><p class="text-indigo-200 text-[10px] font-bold uppercase mb-1">黃金風度</p><h3 id="best-wind" class="text-2xl font-black">計算中...</h3></div>
-                        </div>
-                        <div class="bg-red-500/20 rounded-2xl p-3 border border-red-500/30">
-                            <p class="text-red-200 text-[10px] font-bold uppercase mb-1 flex items-center gap-1"><i data-lucide="skull" class="w-3 h-3"></i> 毒藥警示</p>
-                            <h3 id="worst-combo" class="text-lg font-black text-white">計算中...</h3>
-                            <p id="worst-combo-desc" class="text-red-200 text-[10px] mt-1 leading-relaxed">...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-4 shadow-sm border border-slate-50 dark:border-slate-800">
-                <div class="flex items-center justify-between mb-4 px-1">
-                    <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-500"></i> 資金權益曲線</h3>
-                </div>
-                <div class="relative w-full h-56">
-                    <canvas id="equityChart" class="w-full h-full"></canvas>
-                </div>
-            </div>
-
-            <div>
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="grid" class="w-4 h-4 text-indigo-500"></i> 獲利矩陣 (含稅費)</h3>
-                    <p class="text-[10px] text-slate-400 font-bold">往右滑動查看更多 →</p>
-                </div>
-                
-                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 mb-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0">
-                            <i data-lucide="info" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex-1 space-y-2">
-                            <h4 class="text-sm font-black text-indigo-900 dark:text-indigo-200">矩陣說明</h4>
-                            <div class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 leading-relaxed">
-                                <p><span class="font-black">結構：</span>左側為操作人格（打工型/上班族/老闆型），上方為賣出時的環境風度（強風/亂流/陣風/無風）</p>
-                                <p><span class="font-black">顏色：</span><span class="text-red-600 dark:text-red-400 font-bold">紅色</span> = 該組合獲利，<span class="text-green-600 dark:text-green-400 font-bold">綠色</span> = 該組合虧損，<span class="text-slate-400 font-bold">灰色</span> = 無交易記錄</p>
-                                <p><span class="font-black">數字：</span>上方顯示<span class="font-bold">勝率百分比</span>，下方顯示<span class="font-bold">累計淨損益金額</span>（已含買賣手續費及證交稅）</p>
-                                <p><span class="font-black">數據來源：</span>僅統計已平倉的完整交易記錄</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="relative">
-                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10"></div>
-                    <div class="overflow-x-auto no-scrollbar smooth-scroll pb-2 -mx-4 px-4">
-                        <div class="min-w-[500px] grid grid-cols-5 gap-2" id="strategy-matrix"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-6 z-[300]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 max-w-xs w-full shadow-2xl animate-in zoom-in duration-300 text-center border border-slate-100 dark:border-slate-800">
-            <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-4"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
-            <h3 class="text-xl font-black mb-2">確認刪除？</h3><p class="text-xs text-slate-500 font-bold mb-6">此動作無法復原。</p>
-            <div class="flex gap-3"><button onclick="confirmAction()" class="flex-1 bg-red-500 text-white font-black py-3.5 rounded-2xl text-sm btn-press">確認</button><button onclick="closeConfirmModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl text-sm btn-press">取消</button></div>
-        </div>
-    </div>
-
-    <div id="detailsModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[250]" onclick="closeDetailsModal()">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-y-auto no-scrollbar" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between mb-4 pb-4 border-b dark:border-slate-800">
-                <div><h3 class="text-xl font-black" id="detail-title">交易明細</h3><p class="text-xs text-slate-400 font-bold mt-1" id="detail-subtitle">--</p></div>
-                <button onclick="closeDetailsModal()" class="text-slate-400 bg-slate-100 dark:bg-slate-800 p-2 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div id="detail-list" class="space-y-3 pb-safe"></div>
-        </div>
-    </div>
-
-    <div id="imageModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md hidden flex items-center justify-center p-4 z-[300]" onclick="closeImageModal()">
-        <div class="relative w-full h-full flex items-center justify-center" onclick="event.stopPropagation()">
-            <img id="fullImage" src="" class="max-w-full max-h-full rounded-lg shadow-2xl object-contain">
-            <button onclick="closeImageModal()" class="absolute top-4 right-4 bg-slate-800/80 text-white p-3 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
-    </div>
-
-    <div id="addPositionModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[200]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300 overflow-y-auto no-scrollbar max-h-[90dvh]">
-            <div class="flex items-center gap-3 mb-6 text-indigo-600"><div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center"><i data-lucide="trending-up" class="w-5 h-5"></i></div><h3 class="text-xl font-black text-slate-900 dark:text-slate-100">倉位加碼</h3></div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼價格</label><input type="number" inputmode="decimal" id="addPosPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼股數</label><input type="number" inputmode="numeric" id="addPosQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
-                </div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼日期</label><input type="date" id="addPosDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base appearance-none"></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">理由</label><textarea id="addPosNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-bold text-base" placeholder="為何加碼？"></textarea></div>
-                <div class="flex gap-3 pt-2"><button onclick="confirmAddPosition()" class="flex-[2] bg-indigo-600 text-white font-black py-4 rounded-2xl text-base btn-press">確認</button><button onclick="closeAddPositionModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl text-base btn-press">取消</button></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="sellModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[200]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300 overflow-y-auto no-scrollbar max-h-[90dvh]">
-            <div class="flex items-center gap-3 mb-6 text-red-500"><div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center"><i data-lucide="log-out" class="w-5 h-5"></i></div><h3 class="text-xl font-black text-slate-900 dark:text-slate-100">平倉/減碼</h3></div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-3 gap-2 mb-1">
-                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold">持倉</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-current-qty">0</p></div>
-                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold">成本</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-avg-cost">0</p></div>
-                    <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-3 text-center border border-amber-100 dark:border-amber-900/30"><p class="text-[9px] text-amber-600 dark:text-amber-400 uppercase font-bold">已付手續費</p><p class="text-xl font-black text-amber-600 dark:text-amber-400" id="sell-paid-fee">0</p></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出價格</label><input type="number" inputmode="decimal" id="sellPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出股數</label><input type="number" inputmode="numeric" id="sellQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
-                </div>
-                <div id="sell-estimate" class="hidden bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold mb-1">預估淨損益</p><p class="text-base font-black" id="sell-estimate-val">--</p></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出日期</label><input type="date" id="sellDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base appearance-none"></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出理由</label><textarea id="sellNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-bold text-base" placeholder="為何賣出？"></textarea></div>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-1 ml-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">當下風度</label></div>
-                    <div class="grid grid-cols-4 gap-2" id="exitWindContainer">
-                        <div onclick="selectWind('exit', '強風')" data-wind="強風" class="wind-card 強風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">強風</div>
-                        <div onclick="selectWind('exit', '亂流')" data-wind="亂流" class="wind-card 亂流 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">亂流</div>
-                        <div onclick="selectWind('exit', '陣風')" data-wind="陣風" class="wind-card 陣風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">陣風</div>
-                        <div onclick="selectWind('exit', '無風')" data-wind="無風" class="wind-card 無風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">無風</div>
-                    </div>
-                    <input type="hidden" id="exitWindInput" value="強風">
-                </div>
-                <div class="flex gap-3 pt-2"><button onclick="confirmSellAction()" class="flex-[2] bg-slate-900 dark:bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-red-600 transition shadow-lg shadow-slate-200 dark:shadow-none text-base btn-press">賣出</button><button onclick="closeModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl text-base btn-press">取消</button></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="filterModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[200]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
-            <div class="flex items-center gap-3 mb-6"><div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i data-lucide="calendar-range" class="w-5 h-5"></i></div><h3 class="text-xl font-black">區間查詢</h3></div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-4 gap-2">
-                    <button onclick="quickSetDate('thisMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i><span class="text-[10px]">本月</span></button>
-                    <button onclick="quickSetDate('lastMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-minus" class="w-4 h-4"></i><span class="text-[10px]">上月</span></button>
-                    <button onclick="quickSetDate('thisYear')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-range" class="w-4 h-4"></i><span class="text-[10px]">今年</span></button>
-                    <button onclick="quickSetDate('last30')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="hourglass" class="w-4 h-4"></i><span class="text-[10px]">近30天</span></button>
-                </div>
-                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
-                    <div class="flex-1"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">From</label><input type="date" id="filterStartDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0"></div>
-                    <div class="text-slate-300 dark:text-slate-600"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
-                    <div class="flex-1 text-right"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">To</label><input type="date" id="filterEndDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0 text-right"></div>
-                </div>
-                <div class="flex gap-3 pt-2"><button onclick="applyDateFilter()" class="flex-[2] bg-indigo-600 text-white font-bold py-3.5 rounded-2xl text-sm btn-press">套用篩選</button><button onclick="resetDateFilter()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl text-sm btn-press">重設</button></div>
-                <button onclick="hideFilterModal()" class="w-full text-slate-400 text-xs font-bold uppercase tracking-widest py-2">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="windHelpModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[300]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-y-auto no-scrollbar">
-            <div class="flex items-center justify-between mb-4 pb-2 border-b dark:border-slate-800"><h3 class="text-xl font-black">風度圖規則</h3><button onclick="hideWindHelp()" class="text-slate-300 p-2"><i data-lucide="x" class="w-6 h-6"></i></button></div>
-            <div class="space-y-3 pb-safe">
-                 <div class="p-4 rounded-3xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-red-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-red-500/30">強風</div><div><p class="font-black text-red-600 dark:text-red-400 text-base">勝率偏高</p><p class="text-[10px] text-red-400 dark:text-red-300 font-bold">適合：積極操作</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 且 MACD紅柱放大。</p></div>
-                 <div class="p-4 rounded-3xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-amber-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-amber-500/30">亂流</div><div><p class="font-black text-amber-600 dark:text-amber-400 text-base">震盪整理</p><p class="text-[10px] text-amber-500 dark:text-amber-300 font-bold">適合：停利/縮手</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 但 MACD紅柱縮短。</p></div>
-                 <div class="p-4 rounded-3xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/30">陣風</div><div><p class="font-black text-blue-600 dark:text-blue-400 text-base">空頭反彈</p><p class="text-[10px] text-blue-400 dark:text-blue-300 font-bold">適合：短打/觀察</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 但 MACD綠柱縮短。</p></div>
-                 <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-slate-400 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-slate-400/30">無風</div><div><p class="font-black text-slate-600 dark:text-slate-400 text-base">多做多賠</p><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">適合：空手休息</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 且 MACD綠柱放大。</p></div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="personaHelpModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[300]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] max-w-3xl w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-hidden">
-            <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
-                <h3 class="text-xl font-black">KITE 策略分支手冊</h3>
-                <button onclick="hidePersonaHelp()" class="text-slate-300 hover:text-indigo-500 p-2 -mr-2"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <div class="overflow-y-auto p-6 pt-4 space-y-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300 pb-safe">
-                
-                <section class="space-y-3">
-                    <h4 class="font-black text-blue-600 flex items-center gap-2 text-lg"><i data-lucide="zap" class="w-5 h-5"></i> 1. 打工型 (Freelancer) — 日級別</h4>
-                    <p class="text-xs bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">核心理念：頻繁進出。強調必須嚴守紀律，否則容易虧損退出市場！</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
-                            <h5 class="font-black text-blue-700 mb-1">A. 強勢日 (追漲策略)</h5>
-                            <p class="text-[11px]">強風/陣風適用。選營收 YOY/成值最強。週 MACD 向上，建議 10:00 後觀察追求延續性。</p>
-                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3日內未脫離成本或虧損5%。</p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
-                            <h5 class="font-black text-blue-700 mb-1">B. 日拉回 (低吸策略)</h5>
-                            <p class="text-[11px]">易漲循環適用。拉回 5 日線附近買進，建議分 3 次買進建立成本。</p>
-                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3-5天沒發動或破5日線。</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="space-y-3">
-                    <h4 class="font-black text-indigo-600 flex items-center gap-2 text-lg"><i data-lucide="briefcase" class="w-5 h-5"></i> 2. 上班族 (Office) — 波段操作</h4>
-                    <p class="text-xs bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">核心理念：參與 MACD 趨勢。不需時刻盯盤。</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
-                            <h5 class="font-black text-indigo-700 mb-1">A. 強勢週 (趨勢策略)</h5>
-                            <p class="text-[11px]">強風/陣風。日 MACD 剛翻多 1-2 天，確認週 MACD 向上。建議 11:30 後出手。</p>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
-                            <h5 class="font-black text-indigo-700 mb-1">B. 週趨勢 (拉回策略)</h5>
-                            <p class="text-[11px]">易漲循環。參與週 MACD 剛翻多 1-2 週，拉回 5 日線附近買下跌。停損週五收盤破上週五。</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="space-y-3">
-                    <h4 class="font-black text-purple-600 flex items-center gap-2 text-lg"><i data-lucide="crown" class="w-5 h-5"></i> 3. 老闆型 (Boss) — 長期/價值</h4>
-                    <p class="text-xs bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/30">核心理念：買拉回(買綠不買紅)。總資金拆 5 份，單一標的上限制 20%。</p>
-                    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
-                        <h5 class="font-black text-purple-700 mb-1 underline">週拉回 / 廉價收購 SOP</h5>
-                        <p class="text-[11px]">營收 YoY > 30% 且創高。強/亂風分 3-5 批靠近月線買；陣/無風分 10-15 批破月線或靠季線買。</p>
-                        <p class="text-[10px] text-red-500 font-bold mt-1">停損：月 MACD 縮短、YoY 轉負、或守季線。</p>
-                    </div>
-                    <div class="bg-red-600 text-white p-4 rounded-2xl shadow-lg border border-red-400">
-                        <p class="font-black text-xs">★ 加碼原則 (必看)：</p>
-                        <p class="text-[11px] mt-1 leading-relaxed">若買進第一筆後獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。</p>
-                    </div>
-                </section>
-
-            </div>
-        </div>
-    </div>
-    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]">
-        <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-300">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </div>
-                <h3 class="text-xl font-black">交易成本設定</h3>
-            </div>
-            <div class="space-y-5">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">券商手續費折扣 (折數)</label>
-                    <div class="relative">
-                        <input type="number" inputmode="decimal" id="setting-discount" step="0.1" placeholder="例如 1.7" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">折</span>
-                    </div>
-                    <p class="text-[10px] text-slate-400 px-1">標準手續費為 0.1425%，1.7折請填 1.7</p>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">初始投入本金 (元)</label>
-                    <div class="relative">
-                        <input type="number" inputmode="numeric" id="setting-initial-capital" step="10000" placeholder="例如 500000" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">手續費最低低消 (元)</label>
-                    <div class="relative">
-                        <input type="number" inputmode="numeric" id="setting-min-fee" step="1" placeholder="例如 1" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">元</span>
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <button onclick="saveSettings()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none btn-press flex items-center justify-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> 儲存設定
-                    </button>
-                    <button onclick="closeSettingsModal()" class="w-full text-slate-400 font-bold py-3 mt-2 text-xs uppercase tracking-widest">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -546,7 +27,7 @@
         let chartInstance = null;
         let currentDeviceId = null;
         let visibilityHandler = null;
-        
+
         window.trades = trades;
         // --- 🚀 新增：Google Sheet 連線設定 ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyvQyrjFdchuPKOilwP8pn1MiWiJtmZLRfj4cIGerrZsdw-PIFQGAHZOpmBSJmhbDJvDg/exec";
@@ -557,11 +38,11 @@
         window.updateStockData = async () => {
             const btn = document.getElementById('refresh-btn-icon');
             if(btn) btn.classList.add('animate-spin');
-            
+
             try {
                 const res = await fetch(GAS_URL);
                 const data = await res.json();
-                
+
                 // 整理資料
                 data.forEach(row => {
                     const code = row.symbolCode.toString();
@@ -602,12 +83,12 @@
         // 等待 1 秒確保網頁載入完成，然後開始監聽
         setTimeout(() => {
             const codeInput = document.getElementById('symbolCode');
-            
+
             if(codeInput) {
                 // 當你在「代號」欄位打字時...
                 codeInput.addEventListener('input', (e) => {
                     const inputCode = e.target.value; // 你輸入的數字 (例如 2330)
-                    
+
                     // 去檢查我們腦袋裡的名單 (window.stockNames) 有沒有這個號碼
                     if (window.stockNames[inputCode]) {
                         // 有的話，把名稱填入「名稱」欄位
@@ -665,7 +146,7 @@
                 if (snapshot.exists()) {
                     const sessionData = snapshot.data();
                     const currentDeviceId = getDeviceId();
-                    
+
                     // 如果會話中的設備ID與當前設備不同，說明其他設備登入了
                     if (sessionData.deviceId && sessionData.deviceId !== currentDeviceId) {
                         // 清理定時器和事件監聽器
@@ -714,7 +195,7 @@
         window.getFeeSettings = () => {
             const saved = localStorage.getItem('kite_fee_settings');
             const defaults = { discount: 1.7, minFee: 1, initialCapital: 1000000 };
-            
+
             if (saved) {
                 try {
                     const savedSettings = JSON.parse(saved);
@@ -746,14 +227,14 @@
             localStorage.setItem('kite_fee_settings', JSON.stringify({ discount, minFee, initialCapital }));
             closeSettingsModal();
             renderHistory();
-            updateGlobalStats(); 
+            updateGlobalStats();
             renderStrategyPage();
             alert('費率已更新！所有損益已重新計算。');
         };
 
         window.calculateCost = (price, qty, type) => {
             const s = window.getFeeSettings();
-            const feeRate = 0.001425 * (s.discount / 10); 
+            const feeRate = 0.001425 * (s.discount / 10);
             const rawFee = Math.floor(price * qty * feeRate);
             const finalFee = Math.max(s.minFee, rawFee);
             const tax = type === 'sell' ? Math.floor(price * qty * 0.003) : 0;
@@ -821,13 +302,13 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                
+
                 // 更新會話信息（確保會話是最新的）
                 await updateUserSession(user.uid);
-                
+
                 // 開始監聽會話變化
                 monitorSession(user.uid);
-                
+
                 document.getElementById('login-overlay').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('blur-login');
                 if(user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
@@ -850,7 +331,7 @@
                     document.removeEventListener('visibilitychange', visibilityHandler);
                     visibilityHandler = null;
                 }
-                
+
                 document.getElementById('login-overlay').classList.remove('hidden');
                 document.getElementById('app-content').classList.add('blur-login');
                 if(unsubscribe) unsubscribe();
@@ -891,10 +372,10 @@
             const idx = document.getElementById('subStrategyInput').value;
             const price = parseFloat(document.getElementById('entryPrice').value);
             const qty = parseInt(document.getElementById('quantity').value);
-            
+
             // 計算包含手續費的平均成本
             const avgPriceWithFee = window.calculateAveragePriceWithFee(price, qty);
-            
+
             const newTrade = {
                 persona: window.currentPersona,
                 strategyIdx: idx,
@@ -998,22 +479,22 @@
             return new Date(d.getTime() - offset).toISOString().split('T')[0];
         };
         window.selectedDate = window.getLocalISODate();
-        
-        window.switchTab = (t) => { 
+
+        window.switchTab = (t) => {
             ['add','portfolio','history','strategy', 'journal'].forEach(p=>{
-                document.getElementById(`page-${p}`).classList.add('hidden'); 
-                document.getElementById(`tab-${p}`).classList.remove('active'); 
-            }); 
-            document.getElementById(`page-${t}`).classList.remove('hidden'); 
-            document.getElementById(`tab-${t}`).classList.add('active'); 
+                document.getElementById(`page-${p}`).classList.add('hidden');
+                document.getElementById(`tab-${p}`).classList.remove('active');
+            });
+            document.getElementById(`page-${t}`).classList.remove('hidden');
+            document.getElementById(`tab-${t}`).classList.add('active');
             if(t==='strategy') renderStrategyPage();
             if(t==='journal') renderJournalPage();
-            window.scrollTo(0,0); 
+            window.scrollTo(0,0);
         };
-        
+
         window.toggleUserMenu = () => document.getElementById('user-menu').classList.toggle('hidden');
         window.toggleThemeMenu = () => document.getElementById('theme-menu').classList.toggle('hidden');
-        
+
         // 應用主題的實際邏輯
         window.applyTheme = (theme) => {
             const h = document.documentElement;
@@ -1031,7 +512,7 @@
                 }
             }
         };
-        
+
         // 設置主題並保存
         window.setTheme = (m) => {
             if (m === 'dark') {
@@ -1046,7 +527,7 @@
             document.getElementById('theme-menu').classList.add('hidden');
             updateThemeIcons();
         };
-        
+
         // 監聽系統主題變化
         window.setupSystemThemeListener = () => {
             const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -1064,12 +545,12 @@
                 mediaQuery.addListener(handleChange);
             }
         };
-        
-        window.updateThemeIcons = () => { 
-            document.getElementById('theme-icon-light').classList.add('hidden'); 
-            document.getElementById('theme-icon-dark').classList.add('hidden'); 
-            document.getElementById('theme-icon-auto').classList.add('hidden'); 
-            const s = localStorage.getItem('kite_theme') || 'system'; 
+
+        window.updateThemeIcons = () => {
+            document.getElementById('theme-icon-light').classList.add('hidden');
+            document.getElementById('theme-icon-dark').classList.add('hidden');
+            document.getElementById('theme-icon-auto').classList.add('hidden');
+            const s = localStorage.getItem('kite_theme') || 'system';
             if (s === 'light') {
                 document.getElementById('theme-icon-light').classList.remove('hidden');
             } else if (s === 'dark') {
@@ -1088,32 +569,32 @@
         window.showPersonaHelp = () => document.getElementById('personaHelpModal').classList.remove('hidden');
         window.hidePersonaHelp = () => document.getElementById('personaHelpModal').classList.add('hidden');
         window.closeImageModal = () => document.getElementById('imageModal').classList.add('hidden');
-        
+
         window.openImageModal = (src) => {
             document.getElementById('fullImage').src = src;
             document.getElementById('imageModal').classList.remove('hidden');
         };
 
         window.selectWind = (phase, w) => { document.querySelectorAll(`#${phase==='entry'?'entryWindContainer':'exitWindContainer'} .wind-card`).forEach(c=>c.classList.remove('selected')); document.querySelector(`#${phase==='entry'?'entryWindContainer':'exitWindContainer'} .wind-card.${w}`).classList.add('selected'); document.getElementById(`${phase==='entry'?'entryWindInput':'exitWindInput'}`).value=w; };
-        
+
         window.selectPersona = (p) => { window.currentPersona=p; document.querySelectorAll('.persona-card').forEach(c=>c.classList.remove('selected')); document.getElementById(`p-${p}`).classList.add('selected'); document.getElementById('form-container').classList.remove('hidden'); document.getElementById('persona-indicator').style.backgroundColor=personas[p].color; const container=document.getElementById('subStrategyContainer'); container.innerHTML = personas[p].options.map((o,i)=>`<div onclick="selectStrategy(${i})" id="strat-${i}" class="cursor-pointer bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-3 rounded-2xl flex items-center gap-2 btn-press"><div class="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center strategy-check"><div class="w-2 h-2 rounded-full bg-white opacity-0 strategy-dot"></div></div><span class="font-black text-xs text-slate-600 dark:text-slate-300">${o.name}</span></div>`).join(''); selectStrategy(0); document.getElementById('entryDate').valueAsDate = new Date(); selectWind('entry','強風'); };
         window.selectStrategy = (i) => { document.getElementById('subStrategyInput').value=i; document.querySelectorAll('#subStrategyContainer > div').forEach(c=>{ c.classList.remove('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20'); c.querySelector('.strategy-check').classList.remove('bg-indigo-600','border-indigo-600'); c.querySelector('.strategy-dot').classList.remove('opacity-100'); }); const s=document.getElementById(`strat-${i}`); if(s){ s.classList.add('border-indigo-500','bg-indigo-50','dark:bg-indigo-900/20'); const c=s.querySelector('.strategy-check'); c.classList.add('bg-indigo-600','border-indigo-600'); c.querySelector('.strategy-dot').classList.add('opacity-100'); updateSubSop(); } };
         window.updateSubSop = () => { const i=document.getElementById('subStrategyInput').value; if(i==="")return; const o=personas[window.currentPersona].options[i]; document.getElementById('persona-summary-text').textContent=o.summary; document.getElementById('rule-sl').textContent=o.sl; document.getElementById('rule-tp').textContent=o.tp; };
-        
+
         window.handleImageUpload = (e) => { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{ const img=new Image(); img.src=ev.target.result; img.onload=()=>{ const c=document.createElement('canvas'); const ctx=c.getContext('2d'); const s=800/img.width; const w=(s<1)?800:img.width; const h=(s<1)?img.height*s:img.height; c.width=w; c.height=h; ctx.drawImage(img,0,0,w,h); window.tempScreenshot=c.toDataURL('image/jpeg',0.5); document.getElementById('upload-preview').src=window.tempScreenshot; document.getElementById('upload-placeholder').classList.add('hidden'); document.getElementById('upload-preview-container').classList.remove('hidden'); }}; r.readAsDataURL(f); };
         window.clearImage = (e) => { e.preventDefault(); window.tempScreenshot=null; document.getElementById('tradeScreenshot').value=''; document.getElementById('upload-preview').src=''; document.getElementById('upload-preview-container').classList.add('hidden'); document.getElementById('upload-placeholder').classList.remove('hidden'); };
 
-        window.openSellModal = (id) => { 
-            window.tradeToSellId=id; 
-            const t=trades.find(item=>item.id===id); 
-            document.getElementById('sellModal').classList.remove('hidden'); 
-            document.getElementById('sellPrice').value=''; 
-            document.getElementById('sellQty').value=t.totalQuantity; 
-            document.getElementById('sellQty').max=t.totalQuantity; 
-            document.getElementById('sellNote').value=''; 
-            document.getElementById('sell-current-qty').textContent=t.totalQuantity.toLocaleString(); 
-            document.getElementById('sell-avg-cost').textContent='$'+t.averagePrice.toFixed(2); 
-            
+        window.openSellModal = (id) => {
+            window.tradeToSellId=id;
+            const t=trades.find(item=>item.id===id);
+            document.getElementById('sellModal').classList.remove('hidden');
+            document.getElementById('sellPrice').value='';
+            document.getElementById('sellQty').value=t.totalQuantity;
+            document.getElementById('sellQty').max=t.totalQuantity;
+            document.getElementById('sellNote').value='';
+            document.getElementById('sell-current-qty').textContent=t.totalQuantity.toLocaleString();
+            document.getElementById('sell-avg-cost').textContent='$'+t.averagePrice.toFixed(2);
+
             // 計算已付手續費
             let totalFeesPaid = 0;
             t.history.forEach(h => {
@@ -1122,20 +603,20 @@
                 }
             });
             document.getElementById('sell-paid-fee').textContent='$'+totalFeesPaid.toLocaleString();
-            
-            document.getElementById('sellDate').valueAsDate=new Date(); 
-            document.getElementById('sell-estimate').classList.add('hidden'); 
-            selectWind('exit','強風'); 
-            updateSellEstimate(); 
+
+            document.getElementById('sellDate').valueAsDate=new Date();
+            document.getElementById('sell-estimate').classList.add('hidden');
+            selectWind('exit','強風');
+            updateSellEstimate();
         };
-        
-        window.updateSellEstimate = () => { 
+
+        window.updateSellEstimate = () => {
             if(!window.tradeToSellId) return;
             const t = trades.find(item => item.id === window.tradeToSellId);
             const price = parseFloat(document.getElementById('sellPrice').value);
             const qty = parseInt(document.getElementById('sellQty').value);
             const el = document.getElementById('sell-estimate');
-            
+
             if(price && qty && t) {
                 const sellFee = window.calculateCost(price, qty, 'sell');
                 const netPnL = window.calculateNetPnL(t.averagePrice, price, qty);
@@ -1159,54 +640,54 @@
         };
 
         window.closeModal = () => { document.getElementById('sellModal').classList.add('hidden'); window.tradeToSellId=null; };
-        
+
         window.addPosition = (id) => { window.tradeToAddId=id; document.getElementById('addPositionModal').classList.remove('hidden'); document.getElementById('addPosPrice').value=''; document.getElementById('addPosQty').value=''; document.getElementById('addPosNote').value=''; document.getElementById('addPosDate').valueAsDate=new Date(); };
         window.closeAddPositionModal = () => { document.getElementById('addPositionModal').classList.add('hidden'); window.tradeToAddId=null; };
-        
+
         window.requestDelete = (id) => { window.tradeToDeleteId=id; document.getElementById('confirmModal').classList.remove('hidden'); };
         window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.add('hidden'); window.tradeToDeleteId=null; };
-        
-        window.viewDetails = (id) => { 
-            const t = trades.find(item => item.id === id); 
-            if(!t) return; 
-            document.getElementById('detail-title').textContent = `${t.symbolCode} ${t.symbolName}`; 
-            document.getElementById('detail-subtitle').textContent = `均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`; 
-            const list = document.getElementById('detail-list'); 
-            let currentCost = 0, currentQty = 0, avgPrice = 0; 
+
+        window.viewDetails = (id) => {
+            const t = trades.find(item => item.id === id);
+            if(!t) return;
+            document.getElementById('detail-title').textContent = `${t.symbolCode} ${t.symbolName}`;
+            document.getElementById('detail-subtitle').textContent = `均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`;
+            const list = document.getElementById('detail-list');
+            let currentCost = 0, currentQty = 0, avgPrice = 0;
 
             // Map with original index to ensure robust editing even if sorted or timestamps missing
             const historyWithIndex = t.history.map((h, i) => ({ ...h, originalIndex: i }));
             const sortedHistory = historyWithIndex.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
-            
-            const htmlItems = sortedHistory.map(h => { 
-                let pnlDisplay = ''; 
-                let feeDisplay = ''; 
-                if(h.type === 'buy') { 
+
+            const htmlItems = sortedHistory.map(h => {
+                let pnlDisplay = '';
+                let feeDisplay = '';
+                if(h.type === 'buy') {
                     // 買入時，總成本包含手續費
                     const buyFee = window.calculateCost(h.price, h.quantity, 'buy');
                     const buyCost = (h.price * h.quantity) + buyFee;
-                    currentCost += buyCost; 
-                    currentQty += h.quantity; 
-                    avgPrice = currentCost / currentQty; 
+                    currentCost += buyCost;
+                    currentQty += h.quantity;
+                    avgPrice = currentCost / currentQty;
                     feeDisplay = `<div class="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費:</span> <span class="font-black">$${buyFee.toLocaleString()}</span></div>`;
-                } else if(h.type === 'sell') { 
-                    let cost = avgPrice * h.quantity; 
+                } else if(h.type === 'sell') {
+                    let cost = avgPrice * h.quantity;
                     const sellFee = window.calculateCost(h.price, h.quantity, 'sell');
-                    let realizedPnL = window.calculateNetPnL(avgPrice, h.price, h.quantity); 
-                    let pct = cost > 0 ? ((realizedPnL / cost) * 100).toFixed(1) : 0; 
-                    const pnlClass = realizedPnL >= 0 ? 'text-red-500' : 'text-green-600'; 
+                    let realizedPnL = window.calculateNetPnL(avgPrice, h.price, h.quantity);
+                    let pct = cost > 0 ? ((realizedPnL / cost) * 100).toFixed(1) : 0;
+                    const pnlClass = realizedPnL >= 0 ? 'text-red-500' : 'text-green-600';
                     feeDisplay = `<div class="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費+稅:</span> <span class="font-black">$${sellFee.toLocaleString()}</span></div>`;
-                    pnlDisplay = `<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>淨損益: ${realizedPnL >= 0 ? '+' : ''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`; 
-                    currentCost -= avgPrice * h.quantity; 
-                    currentQty -= h.quantity; 
+                    pnlDisplay = `<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>淨損益: ${realizedPnL >= 0 ? '+' : ''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`;
+                    currentCost -= avgPrice * h.quantity;
+                    currentQty -= h.quantity;
                 }
-                
-                const imageHtml = h.screenshot 
+
+                const imageHtml = h.screenshot
                     ? `<div onclick="openImageModal('${h.screenshot}')" class="mt-2 h-16 w-24 rounded-xl bg-slate-100 dark:bg-slate-800 bg-cover bg-center border border-slate-200 dark:border-slate-700 cursor-pointer relative group overflow-hidden" style="background-image: url('${h.screenshot}')">
                          <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <div class="bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md"><i data-lucide="zoom-in" class="w-3 h-3"></i></div>
                          </div>
-                       </div>` 
+                       </div>`
                     : '';
 
                 // Use originalIndex for ID and handlers
@@ -1238,13 +719,13 @@
 
                     ${imageHtml}
                     ${pnlDisplay}
-                </div>`; 
-            }); 
-            list.innerHTML = htmlItems.reverse().join(''); 
+                </div>`;
+            });
+            list.innerHTML = htmlItems.reverse().join('');
             lucide.createIcons();
-            document.getElementById('detailsModal').classList.remove('hidden'); 
+            document.getElementById('detailsModal').classList.remove('hidden');
         };
-        
+
         window.closeDetailsModal = () => document.getElementById('detailsModal').classList.add('hidden');
 
         window.toggleEditNote = (tradeId, idx) => {
@@ -1422,19 +903,19 @@
         // Strategy Logic
         window.renderStrategyPage = () => {
             const closedTrades = trades.filter(t => t.status === 'closed');
-            
+
             const personaStats = { freelancer: 0, office: 0, boss: 0 };
             const windStats = { 強風: 0, 亂流: 0, 陣風: 0, 無風: 0 };
             const comboStats = {};
-            
+
             closedTrades.forEach(t => {
                 let pnl = 0;
                 let exitWind = t.exitWind || '無風';
                 t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
-                
+
                 if (personaStats[t.persona] !== undefined) personaStats[t.persona] += pnl;
                 if (windStats[exitWind] !== undefined) windStats[exitWind] += pnl;
-                
+
                 const comboKey = `${t.persona}-${exitWind}`;
                 if (!comboStats[comboKey]) comboStats[comboKey] = 0;
                 comboStats[comboKey] += pnl;
@@ -1443,12 +924,12 @@
             const bestPersona = Object.entries(personaStats).reduce((a, b) => a[1] > b[1] ? a : b, ['無', -Infinity]);
             const bestWind = Object.entries(windStats).reduce((a, b) => a[1] > b[1] ? a : b, ['無', -Infinity]);
             const worstCombo = Object.entries(comboStats).reduce((a, b) => a[1] < b[1] ? a : b, ['無', Infinity]);
-            
+
             const personaTitles = { freelancer: '打工型', office: '上班族', boss: '老闆型', '無': '尚未交易' };
 
             document.getElementById('best-persona').textContent = personaTitles[bestPersona[0]] || '尚未交易';
             document.getElementById('best-wind').textContent = bestWind[0] || '無';
-            
+
             if (worstCombo[0] !== '無' && worstCombo[1] < 0) {
                 const [p, w] = worstCombo[0].split('-');
                 document.getElementById('worst-combo').textContent = `${personaTitles[p]} + ${w}`;
@@ -1466,10 +947,10 @@
             const matrix = document.getElementById('strategy-matrix');
             const winds = ['強風', '亂流', '陣風', '無風'];
             const personasList = ['freelancer', 'office', 'boss'];
-            
+
             let html = `<div class="bg-transparent"></div>`;
             winds.forEach(w => html += `<div class="text-[10px] text-center font-black text-slate-400 uppercase tracking-widest py-2">${w}</div>`);
-            
+
             personasList.forEach(p => {
                 html += `<div class="flex flex-col items-center justify-center gap-1.5">
                     <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs" style="background-color: ${personas[p].color}">
@@ -1477,7 +958,7 @@
                     </div>
                     <span class="text-[10px] font-black text-slate-600 dark:text-slate-300">${personas[p].title}</span>
                 </div>`;
-                
+
                 winds.forEach(w => {
                     const tradesInCell = closedTrades.filter(t => t.persona === p && t.exitWind === w);
                     let cellPnl = 0;
@@ -1488,10 +969,10 @@
                         cellPnl += pnl;
                         if(pnl > 0) winCount++;
                     });
-                    
+
                     const winRate = tradesInCell.length > 0 ? Math.round((winCount / tradesInCell.length) * 100) : 0;
                     const bgClass = cellPnl > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300' : (cellPnl < 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300');
-                    
+
                     html += `
                         <div class="matrix-cell ${bgClass} rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
                             <span class="text-[10px] font-bold">${winRate}%</span>
@@ -1500,7 +981,7 @@
                     `;
                 });
             });
-            
+
             matrix.innerHTML = html;
             lucide.createIcons();
         }
@@ -1524,19 +1005,19 @@
                     }
                 });
             });
-            
+
             allHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
+
             let accumulated = 0;
             const labels = [];
             const dataPoints = [];
-            
+
             allHistory.forEach(h => {
                 accumulated += h.pnl;
                 labels.push(h.date.substring(5));
                 dataPoints.push(accumulated);
             });
-            
+
             if (dataPoints.length === 0) { labels.push('Start'); dataPoints.push(0); }
 
             const isDark = document.documentElement.classList.contains('dark');
@@ -1577,17 +1058,17 @@
         title: '打工型',
         color: '#3b82f6',
         options: [
-            { 
-                name: '強勢日(追漲策略)', 
-                summary: '核心：頻繁進出。重點：選營收YOY或成值最強標的，第一/二根紅K，週MACD向上，建議10:00後觀察。', 
-                sl: '1. 買進3日內未脫離成本(-1~2%)\n2. 虧損達5%', 
-                tp: '1. 獲利10%以上(放出風箏)\n2. 收盤跌破5日/10日線' 
+            {
+                name: '強勢日(追漲策略)',
+                summary: '核心：頻繁進出。重點：選營收YOY或成值最強標的，第一/二根紅K，週MACD向上，建議10:00後觀察。',
+                sl: '1. 買進3日內未脫離成本(-1~2%)\n2. 虧損達5%',
+                tp: '1. 獲利10%以上(放出風箏)\n2. 收盤跌破5日/10日線'
             },
-            { 
-                name: '日拉回(低吸策略)', 
-                summary: '核心：飆股休息。重點：拉回5日線附近買進。建議分3次買進建立成本。', 
-                sl: '1. 3~5天沒發動下一波攻勢\n2. 跌破5日線', 
-                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+            {
+                name: '日拉回(低吸策略)',
+                summary: '核心：飆股休息。重點：拉回5日線附近買進。建議分3次買進建立成本。',
+                sl: '1. 3~5天沒發動下一波攻勢\n2. 跌破5日線',
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線'
             }
         ]
     },
@@ -1595,17 +1076,17 @@
         title: '上班族',
         color: '#6366f1',
         options: [
-            { 
-                name: '強勢週(趨勢策略)', 
-                summary: '核心：MACD趨勢。重點：參與日MACD剛翻多1-2天，確認週MACD向上。建議11:30後出手。', 
-                sl: '1. 買進4日內未脫離成本(-1~3%)\n2. 收盤跌破5日線', 
-                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線' 
+            {
+                name: '強勢週(趨勢策略)',
+                summary: '核心：MACD趨勢。重點：參與日MACD剛翻多1-2天，確認週MACD向上。建議11:30後出手。',
+                sl: '1. 買進4日內未脫離成本(-1~3%)\n2. 收盤跌破5日線',
+                tp: '1. 獲利10%以上\n2. 收盤跌破5日/10日線'
             },
-            { 
-                name: '週趨勢(拉回策略)', 
-                summary: '核心：易漲循環。重點：參與週MACD剛翻多1-2週，拉回5日線買下跌。', 
-                sl: '1. 當週五收盤低於上週五\n2. 跌破10日線', 
-                tp: '1. 獲利10%以上\n2. 週MACD紅柱縮短(週五)\n3. 跌破5週線(5MA)' 
+            {
+                name: '週趨勢(拉回策略)',
+                summary: '核心：易漲循環。重點：參與週MACD剛翻多1-2週，拉回5日線買下跌。',
+                sl: '1. 當週五收盤低於上週五\n2. 跌破10日線',
+                tp: '1. 獲利10%以上\n2. 週MACD紅柱縮短(週五)\n3. 跌破5週線(5MA)'
             }
         ]
     },
@@ -1613,11 +1094,11 @@
         title: '老闆型',
         color: '#a855f7',
         options: [
-            { 
-                name: '週拉回 / 廉價收購', 
-                summary: '重點：營收YoY>30%且創高。強風/亂流分3-5批靠近月線買；陣/無風分10-15批破月線買。', 
-                sl: '1. 月MACD紅柱縮短\n2. 營收YoY轉負\n3. 守季線', 
-                tp: '1. 週K站不回5週線\n2. 週五收盤比上週五低' 
+            {
+                name: '週拉回 / 廉價收購',
+                summary: '重點：營收YoY>30%且創高。強風/亂流分3-5批靠近月線買；陣/無風分10-15批破月線買。',
+                sl: '1. 月MACD紅柱縮短\n2. 營收YoY轉負\n3. 守季線',
+                tp: '1. 週K站不回5週線\n2. 週五收盤比上週五低'
             }
         ]
     }
@@ -1641,9 +1122,9 @@
 
         // Render Functions
         window.renderPortfolio = () => {
-            const list = document.getElementById('portfolio-list'); 
+            const list = document.getElementById('portfolio-list');
             const openTrades = trades.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt);
-            
+
             // 取得當前時間
             const now = new Date();
             const updateTimeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1657,34 +1138,34 @@
                     </button>
                 </div>`;
 
-            if (openTrades.length === 0) { 
-                list.innerHTML = refreshHeader + `<div class="col-span-full text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">無持倉</div>`; 
+            if (openTrades.length === 0) {
+                list.innerHTML = refreshHeader + `<div class="col-span-full text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">無持倉</div>`;
                 lucide.createIcons();
-                return; 
+                return;
             }
 
             const cardsHtml = openTrades.map(t => {
                 const hasImg = t.history.some(h => h.screenshot);
                 const imgIcon = hasImg ? `<i data-lucide="image" class="w-3.5 h-3.5 text-indigo-400"></i>` : '';
-                
+
                 const entryDateObj = new Date(t.entryDate);
                 const daysHeld = Math.floor((new Date() - entryDateObj) / (1000 * 60 * 60 * 24));
-                
+
                 // === 修改處：顯示完整年月日 (YYYY/MM/DD) ===
-                const entryDateDisplay = t.entryDate.replace(/-/g, '/'); 
-                
+                const entryDateDisplay = t.entryDate.replace(/-/g, '/');
+
                 const livePrice = window.livePrices[t.symbolCode] || t.averagePrice;
-                const isLive = !!window.livePrices[t.symbolCode]; 
+                const isLive = !!window.livePrices[t.symbolCode];
                 const marketValue = livePrice * t.totalQuantity;
-                const costValue = t.averagePrice * t.totalQuantity; 
+                const costValue = t.averagePrice * t.totalQuantity;
                 const unPnl = marketValue - costValue;
                 const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
-                
+
                 const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
                 const bgClass = unPnl >= 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-green-50 dark:bg-green-900/10';
 
                 return `<div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 btn-press relative overflow-hidden" onclick="viewDetails('${t.id}')">
-                    
+
                     <div class="absolute right-0 top-0 bottom-0 w-24 ${bgClass} opacity-50 blur-2xl pointer-events-none"></div>
 
                     <div class="flex justify-between items-start relative z-10 mb-2">
@@ -1693,7 +1174,7 @@
                                 <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
                                 <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
                             </div>
-                            
+
                             <div class="flex items-baseline gap-1.5">
                                 <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">${t.symbolName}</h3>
                                 <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
@@ -1729,19 +1210,19 @@
                     <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
                         <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
                         <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
-                        
+
                         <button onclick="requestDelete('${t.id}')" class="bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400 px-3 py-2.5 rounded-xl flex items-center justify-center transition-colors border border-transparent hover:border-red-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>`;
             }).join('');
-            
+
             list.innerHTML = refreshHeader + cardsHtml;
             lucide.createIcons();
         };
         window.renderHistory = () => {
             const list = document.getElementById('history-list');
             const stats = document.getElementById('history-stats');
-            
+
             const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
                 const getLastSellTime = (trade) => {
                     const lastSell = [...trade.history].reverse().find(h => h.type === 'sell');
@@ -1761,7 +1242,7 @@
             list.innerHTML = closedTrades.map(t => {
                 let totalPnL = 0;
                 let totalFees = 0;
-                let totalCost = 0; 
+                let totalCost = 0;
 
                 t.history.forEach(h => {
                     if(h.type === 'sell') {
@@ -1776,30 +1257,30 @@
                 const roi = totalCost > 0 ? ((totalPnL / totalCost) * 100).toFixed(1) : 0;
                 const sign = totalPnL >= 0 ? '+' : '-';
                 const exitDateStr = t.exitDate || t.history[t.history.length - 1]?.date || '';
-                
+
                 const start = new Date(t.entryDate);
                 const end = new Date(exitDateStr);
                 const daysHeld = Math.max(1, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
-                
+
                 // === 修改處：顯示完整年月日 (YYYY/MM/DD) ===
                 const dateDisplay = t.entryDate.replace(/-/g, '/');
 
                 const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
                 const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
-                
+
                 return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative" onclick="viewDetails('${t.id}')">
-                    
+
                     <div class="flex flex-col gap-1.5">
                         <div class="flex items-center gap-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
                             <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
                         </div>
-                        
+
                         <div class="flex items-baseline gap-1.5">
                             <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
                             <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
                         </div>
-                        
+
                         <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
                             <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
                             <span>費 $${totalFees.toLocaleString()}</span>
@@ -1814,7 +1295,7 @@
                             </p>
                             <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
                         </div>
-                        
+
                         <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
@@ -1822,7 +1303,7 @@
 
                 </div>`;
             }).join('');
-            
+
             lucide.createIcons();
         };
         // ✅ 貼上這段新的 (包含彈窗開關 + 詳細費用計算)
@@ -1834,7 +1315,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             let allTimePL = 0; // 用於計算現金流的全時段損益
             let totalBuyFee = 0, totalSellFee = 0, totalTax = 0;
             let winCount = 0, closedCount = 0;
-            
+
             // --- 新增：未實現損益計算變數 ---
             let tUnrealized = 0;
             let tOpenCost = 0;
@@ -1845,13 +1326,13 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 t.history.forEach(h => {
                     if(h.type === 'sell'){
                         const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
-                        
+
                         // 1. 累計全時段損益 (算現金用)
                         allTimePL += pnl;
 
                         // 2. 累計篩選區間損益 (顯示用)
                         if(window.filterDates.start && window.filterDates.end && (h.date < window.filterDates.start || h.date > window.filterDates.end)) return;
-                        
+
                         // 計算費用細項
                         const bFee = Math.max(s.minFee, Math.floor(t.entryPrice * h.quantity * feeRate));
                         const sFee = Math.max(s.minFee, Math.floor(h.price * h.quantity * feeRate));
@@ -1884,7 +1365,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             // 更新 Header 卡片數據
             const totalAssetsEl = document.getElementById('header-total-assets');
             if(totalAssetsEl) totalAssetsEl.textContent = `$${formatLargeNumber(totalAssets)}`;
-            
+
             const initCapEl = document.getElementById('header-initial-capital');
             if(initCapEl) initCapEl.textContent = `$${formatLargeNumber(initialCapital)}`;
 
@@ -1895,9 +1376,9 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             if(cashEl) cashEl.textContent = `$${formatLargeNumber(availableCash)}`;
 
             // 更新 Header - 已實現損益 (受篩選影響)
-            const plEl = document.getElementById('header-total-pl'); 
+            const plEl = document.getElementById('header-total-pl');
             if(plEl){ plEl.textContent = `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`; plEl.className = `text-base font-black ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
-            
+
             // 更新 Header - 未實現損益
             const unPlEl = document.getElementById('header-unrealized-pl');
             const unPctEl = document.getElementById('header-unrealized-pct');
@@ -1919,42 +1400,4 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             document.getElementById('modal-total-fee').textContent = `$${formatLargeNumber(totalFees)}`;
             document.getElementById('modal-total-tax').textContent = `$${formatLargeNumber(totalTax)}`;
             document.getElementById('modal-win-rate').textContent = winStr;
-        };    </script>
-   <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]" onclick="closeStatsModal()">
-    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300" onclick="event.stopPropagation()">
-        <div class="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white">
-                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-black">損益分析</h3>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">P&L Breakdown</p>
-                </div>
-            </div>
-            <button onclick="closeStatsModal()" class="text-slate-400 bg-slate-50 dark:bg-slate-800 p-2 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-        </div>
-        <div class="space-y-4">
-            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl text-center">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">淨損益 (Net P&L)</p>
-                <p id="modal-net-pnl" class="text-3xl font-black">--</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-amber-50 dark:bg-amber-900/10 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/30">
-                    <div class="flex items-center gap-2 mb-1"><i data-lucide="coins" class="w-3 h-3 text-amber-500"></i><p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">總手續費</p></div>
-                    <p id="modal-total-fee" class="text-lg font-black text-amber-700 dark:text-amber-500">--</p>
-                </div>
-                <div class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30">
-                    <div class="flex items-center gap-2 mb-1"><i data-lucide="landmark" class="w-3 h-3 text-blue-500"></i><p class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase">總證交稅</p></div>
-                    <p id="modal-total-tax" class="text-lg font-black text-blue-700 dark:text-blue-500">--</p>
-                </div>
-            </div>
-            <div class="p-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <span class="text-xs font-bold text-slate-500">交易勝率</span>
-                <span id="modal-win-rate" class="text-base font-black">--</span>
-            </div>
-        </div>
-    </div>
-</div> 
-</body>
-</html>
+        };
