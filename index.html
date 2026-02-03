@@ -1778,25 +1778,32 @@
         };
 
         window.fetchMarketData = async () => {
-            // 模擬抓取：回傳隨機但合理的 OTC, 20MA, MACD 數據
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const base = 220 + (Math.random() * 40 - 20); // 200-240
-                    const trend = Math.random() > 0.5 ? 1 : -1;
-                    const ma = base + (Math.random() * 10 * trend); // +/- deviation
+            // 使用 Google Apps Script 取得真實數據
+            // Action: 'getMarketStatus'
+            const GAS_API = "https://script.google.com/macros/s/AKfycbyvQyrjFdchuPKOilwP8pn1MiWiJtmZLRfj4cIGerrZsdw-PIFQGAHZOpmBSJmhbDJvDg/exec";
 
-                    // Simulate MACD Histogram (Today vs Yesterday)
-                    const macdHist = (Math.random() * 2 - 1).toFixed(2); // -1.00 to 1.00
-                    const prevMacdHist = (Math.random() * 2 - 1).toFixed(2);
+            try {
+                const res = await fetch(`${GAS_API}?action=getMarketStatus`);
+                if (!res.ok) throw new Error("GAS Network response was not ok");
 
-                    resolve({
-                        otc: parseFloat(base.toFixed(2)),
-                        ma20: parseFloat(ma.toFixed(2)),
-                        macdHist: parseFloat(macdHist),
-                        prevMacdHist: parseFloat(prevMacdHist)
-                    });
-                }, 800);
-            });
+                const json = await res.json();
+
+                // 檢查回傳格式是否正確
+                if (json && typeof json.otc === 'number') {
+                    return {
+                        otc: parseFloat(json.otc),
+                        ma20: parseFloat(json.ma20),
+                        macdHist: parseFloat(json.macdHist),
+                        prevMacdHist: parseFloat(json.prevMacdHist)
+                    };
+                } else {
+                    throw new Error("Invalid data format from GAS");
+                }
+            } catch (e) {
+                console.error("無法取得真實風度數據，切換為手動輸入或維持舊狀態", e);
+                // 如果失敗，回傳 null，讓 updateWindStatus 處理
+                return null;
+            }
         };
 
         window.updateWindStatus = async (force = false) => {
@@ -1816,6 +1823,12 @@
              try {
                  console.log("正在抓取風度數據...");
                  const data = await window.fetchMarketData();
+
+                 if (!data) {
+                     alert("無法取得即時風度數據 (GAS 連線失敗或數據未更新)。\n請檢查 Google Sheet 設定。");
+                     return;
+                 }
+
                  const status = window.calculateWindStatus(data.otc, data.ma20, data.macdHist, data.prevMacdHist);
 
                  const statusData = {
