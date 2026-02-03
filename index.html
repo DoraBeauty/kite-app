@@ -540,7 +540,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB4BuO5gvNfkHYYp48FvwYhK-VXpnb7NSg",
@@ -856,8 +856,6 @@
                 subscribeToDailyLogs(user.uid);
                 // 🚀 步驟 4：登入成功，開始抓股價！
                 window.updateStockData();
-                // 🚀 步驟 5：檢查今日風度
-                setTimeout(() => window.updateWindStatus(), 2000);
             } else {
                 // 清理會話監聽、定時器和事件監聽器
                 if (unsubscribeSession) {
@@ -1332,7 +1330,6 @@
                     <button onclick="prevMonth()" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><i data-lucide="chevron-left" class="w-6 h-6 text-slate-400"></i></button>
                     <h3 class="text-xl font-black text-slate-800 dark:text-slate-100">${year}年 ${monthNames[month]}</h3>
                     <div class="flex gap-2">
-                        <button onclick="window.updateWindStatus(true)" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-indigo-500"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                         <button onclick="nextMonth()" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><i data-lucide="chevron-right" class="w-6 h-6 text-slate-400"></i></button>
                     </div>
                 </div>
@@ -1543,27 +1540,51 @@
                 dailyLogs[dateStr].content = currentContent;
             }
 
-            dailyLogs[dateStr].marketStatus = {
-                ...w,
-                label: label,
-                manual: true,
-                otc: 0, ma20: 0, macdHist: 0, prevMacdHist: 0 // Dummy values for manual
-            };
+            const currentLabel = dailyLogs[dateStr].marketStatus?.label;
 
-            // Refresh UI immediately
-            renderCalendar();
-            selectDate(dateStr);
+            if (currentLabel === label) {
+                // Toggle OFF: If clicking the same status, remove it
+                delete dailyLogs[dateStr].marketStatus;
 
-            // Save to DB
-            try {
-                await setDoc(doc(db, "users", currentUser.uid, "dailyLogs", dateStr), {
-                    marketStatus: dailyLogs[dateStr].marketStatus,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-                console.log("Manual wind saved:", label);
-            } catch(e) {
-                console.error("Failed to save manual wind", e);
-                alert("儲存失敗");
+                // Refresh UI immediately
+                renderCalendar();
+                selectDate(dateStr);
+
+                // Delete from DB
+                try {
+                    await updateDoc(doc(db, "users", currentUser.uid, "dailyLogs", dateStr), {
+                        marketStatus: deleteField(),
+                        updatedAt: serverTimestamp()
+                    });
+                    console.log("Manual wind removed:", label);
+                } catch(e) {
+                    console.error("Failed to remove manual wind", e);
+                }
+
+            } else {
+                // Set NEW status
+                dailyLogs[dateStr].marketStatus = {
+                    ...w,
+                    label: label,
+                    manual: true,
+                    otc: 0, ma20: 0, macdHist: 0, prevMacdHist: 0 // Dummy values for manual
+                };
+
+                // Refresh UI immediately
+                renderCalendar();
+                selectDate(dateStr);
+
+                // Save to DB
+                try {
+                    await setDoc(doc(db, "users", currentUser.uid, "dailyLogs", dateStr), {
+                        marketStatus: dailyLogs[dateStr].marketStatus,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    console.log("Manual wind saved:", label);
+                } catch(e) {
+                    console.error("Failed to save manual wind", e);
+                    alert("儲存失敗");
+                }
             }
         };
 
