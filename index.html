@@ -1851,25 +1851,31 @@
         };
 
         window.fetchMarketData = async () => {
-            // 模擬抓取：回傳隨機但合理的 OTC, 20MA, MACD 數據
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const base = 220 + (Math.random() * 40 - 20); // 200-240
-                    const trend = Math.random() > 0.5 ? 1 : -1;
-                    const ma = base + (Math.random() * 10 * trend); // +/- deviation
+            try {
+                const res = await fetch(GAS_URL + "?action=getMarketStatus");
+                const data = await res.json();
 
-                    // Simulate MACD Histogram (Today vs Yesterday)
-                    const macdHist = (Math.random() * 2 - 1).toFixed(2); // -1.00 to 1.00
-                    const prevMacdHist = (Math.random() * 2 - 1).toFixed(2);
+                if (data.error) {
+                    console.error("無法取得市場數據:", data.error);
+                    return null;
+                }
 
-                    resolve({
-                        otc: parseFloat(base.toFixed(2)),
-                        ma20: parseFloat(ma.toFixed(2)),
-                        macdHist: parseFloat(macdHist),
-                        prevMacdHist: parseFloat(prevMacdHist)
-                    });
-                }, 800);
-            });
+                // 確保回傳正確的數據結構
+                if (data.otc === undefined || data.ma20 === undefined) {
+                    console.error("市場數據格式錯誤:", data);
+                    return null;
+                }
+
+                return {
+                    otc: Number(data.otc),
+                    ma20: Number(data.ma20),
+                    macdHist: Number(data.macdHist),
+                    prevMacdHist: Number(data.prevMacdHist)
+                };
+            } catch (e) {
+                console.error("連線失敗:", e);
+                return null;
+            }
         };
 
         window.updateWindStatus = async (force = false) => {
@@ -1889,6 +1895,8 @@
              try {
                  console.log("正在抓取風度數據...");
                  const data = await window.fetchMarketData();
+                 if (!data) throw new Error("無效的市場數據");
+
                  const status = window.calculateWindStatus(data.otc, data.ma20, data.macdHist, data.prevMacdHist);
 
                  const statusData = {
