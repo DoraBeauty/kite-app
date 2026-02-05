@@ -108,6 +108,9 @@
                                 <button onclick="openSettingsModal()" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800">
                                     <i data-lucide="settings-2" class="w-4 h-4 text-slate-400"></i> 手續費設定
                                 </button>
+                                <button onclick="exportToCSV()" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800">
+                                    <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> 匯出 CSV
+                                </button>
                                 <button onclick="handleLogout()" class="w-full px-5 py-4 text-left text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"><i data-lucide="log-out" class="w-4 h-4"></i> 登出帳號</button>
                             </div>
                         </div>
@@ -329,6 +332,42 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-50 dark:border-slate-800">
+                    <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">最大回落 (MDD)</p>
+                    <h3 id="stat-mdd" class="text-xl font-black text-slate-800 dark:text-slate-100">--</h3>
+                    <p id="stat-mdd-amt" class="text-[0.625rem] font-bold text-slate-400">--</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-50 dark:border-slate-800">
+                    <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">獲利因子 (PF)</p>
+                    <h3 id="stat-pf" class="text-xl font-black text-slate-800 dark:text-slate-100">--</h3>
+                    <p class="text-[0.625rem] font-bold text-slate-400">Gross Win/Loss</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-50 dark:border-slate-800">
+                    <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">盈虧比 & 期望值</p>
+                    <h3 id="stat-rr" class="text-xl font-black text-slate-800 dark:text-slate-100">--</h3>
+                    <p id="stat-expectancy" class="text-[0.625rem] font-bold text-slate-400">Exp: --</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-50 dark:border-slate-800">
+                    <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1">連勝 / 連敗</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 id="stat-streak-win" class="text-xl font-black text-red-500">--</h3>
+                        <span class="text-xs text-slate-300">/</span>
+                        <h3 id="stat-streak-loss" class="text-xl font-black text-green-500">--</h3>
+                    </div>
+                    <p id="stat-streak-max" class="text-[0.625rem] font-bold text-slate-400">Max: --</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-4 shadow-sm border border-slate-50 dark:border-slate-800">
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-500"></i> 每月損益統計</h3>
+                </div>
+                <div class="relative w-full h-56">
+                    <canvas id="monthlyPnlChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
             <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-4 shadow-sm border border-slate-50 dark:border-slate-800">
                 <div class="flex items-center justify-between mb-4 px-1">
                     <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-500"></i> 資金權益曲線</h3>
@@ -345,6 +384,13 @@
                 <div class="relative w-full h-40">
                     <canvas id="winRateChart" class="w-full h-full"></canvas>
                 </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-5 shadow-sm border border-slate-50 dark:border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-indigo-500"></i> 策略績效排行</h3>
+                </div>
+                <div id="strategy-ranking-list" class="space-y-3"></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1712,6 +1758,13 @@
             const year = window.currentYear;
             const month = window.currentMonth;
 
+            // Calculate Heatmap Data
+            const stats = window.calculateAdvancedStats(trades);
+            let maxDailyPnl = 0;
+            Object.values(stats.dailyPnL).forEach(v => {
+                if(Math.abs(v) > maxDailyPnl) maxDailyPnl = Math.abs(v);
+            });
+
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -1747,7 +1800,31 @@
                 const hasTrade = trades.some(t => t.entryDate === dateStr || t.exitDate === dateStr || t.history.some(h => h.date === dateStr));
                 const market = dailyLogs[dateStr]?.marketStatus;
 
-                let bgClass = isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : (isToday ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300');
+                // Heatmap Logic
+                const pnl = stats.dailyPnL[dateStr] || 0;
+                let bgStyle = '';
+                let textClass = 'text-slate-700 dark:text-slate-300';
+
+                if (isSelected) {
+                    textClass = 'text-white';
+                } else if (isToday) {
+                    textClass = 'text-indigo-600 dark:text-indigo-400';
+                }
+
+                let bgClass = isSelected ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30' : (isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800');
+
+                if (!isSelected && pnl !== 0) {
+                    const opacity = maxDailyPnl > 0 ? Math.min(0.8, 0.15 + (Math.abs(pnl) / maxDailyPnl) * 0.6) : 0.2;
+                    if (pnl > 0) {
+                        bgStyle = `background-color: rgba(239, 68, 68, ${opacity});`; // Red
+                        textClass = 'text-red-900 dark:text-red-100';
+                        bgClass = 'hover:brightness-95 transition-all'; // Override default hover
+                    } else {
+                        bgStyle = `background-color: rgba(34, 197, 94, ${opacity});`; // Green
+                        textClass = 'text-green-900 dark:text-green-100';
+                        bgClass = 'hover:brightness-95 transition-all';
+                    }
+                }
 
                 // Wind Status Badge
                 let marketHtml = '';
@@ -1759,12 +1836,12 @@
                 }
 
                 html += `
-                    <div onclick="selectDate('${dateStr}')" class="aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all btn-press relative ${bgClass} p-1">
-                        <span class="text-sm font-black leading-none">${day}</span>
+                    <div onclick="selectDate('${dateStr}')" class="aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all btn-press relative ${bgClass} p-1" style="${bgStyle}">
+                        <span class="text-sm font-black leading-none ${textClass}">${day}</span>
                         ${marketHtml}
                         <div class="flex gap-0.5 mt-0.5">
-                            ${hasTrade ? `<div class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-red-500'}"></div>` : ''}
-                            ${hasLog ? `<div class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-green-500'}"></div>` : ''}
+                            ${hasTrade ? `<div class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-400'}"></div>` : ''}
+                            ${hasLog ? `<div class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-slate-400'}"></div>` : ''}
                         </div>
                     </div>
                 `;
@@ -2024,8 +2101,210 @@
             }
         };
 
+        window.calculateAdvancedStats = (trades) => {
+            const dailyPnL = {};
+            const monthlyPnL = {};
+            const strategyStats = {};
+
+            // For Drawdown
+            const settings = window.getFeeSettings();
+            let equity = settings.initialCapital || 1000000;
+            let peakEquity = equity;
+            let maxDrawdown = 0;
+            let maxDrawdownAmount = 0;
+
+            // Streaks
+            let currentWinStreak = 0;
+            let maxWinStreak = 0;
+            let currentLossStreak = 0;
+            let maxLossStreak = 0;
+
+            // 1. Process History for Time-based stats (Daily, Monthly, Equity Curve)
+            const realizedEvents = [];
+
+            trades.forEach(t => {
+                // Strategy Stats (Per Trade)
+                if(t.status === 'closed') {
+                    const stratKey = t.strategyName || 'Unknown';
+                    // Initialize if needed
+                    if(!strategyStats[stratKey]) {
+                        strategyStats[stratKey] = {
+                            pnl: 0,
+                            wins: 0,
+                            count: 0,
+                            persona: t.persona // Store persona for grouping/coloring
+                        };
+                    }
+
+                    let tradePnL = 0;
+                    t.history.forEach(h => {
+                        if(h.type === 'sell') {
+                            tradePnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        }
+                    });
+
+                    strategyStats[stratKey].pnl += tradePnL;
+                    strategyStats[stratKey].count++;
+                    if(tradePnL > 0) strategyStats[stratKey].wins++;
+                }
+
+                // Daily/Monthly PnL (Per Sell Event)
+                t.history.forEach(h => {
+                    if(h.type === 'sell') {
+                        const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        const date = h.date;
+                        const month = date.substring(0, 7); // YYYY-MM
+
+                        // Daily
+                        if(!dailyPnL[date]) dailyPnL[date] = 0;
+                        dailyPnL[date] += pnl;
+
+                        // Monthly
+                        if(!monthlyPnL[month]) monthlyPnL[month] = 0;
+                        monthlyPnL[month] += pnl;
+
+                        realizedEvents.push({ date: date, pnl: pnl, timestamp: h.timestamp || new Date(date).getTime() });
+                    }
+                });
+            });
+
+            // Sort events by time for Equity Curve & MDD
+            realizedEvents.sort((a,b) => a.timestamp - b.timestamp);
+
+            realizedEvents.forEach(e => {
+                equity += e.pnl;
+                if(equity > peakEquity) peakEquity = equity;
+
+                const drawdown = peakEquity - equity;
+                const drawdownPct = peakEquity > 0 ? (drawdown / peakEquity) : 0;
+
+                if(drawdownPct > maxDrawdown) maxDrawdown = drawdownPct;
+                if(drawdown > maxDrawdownAmount) maxDrawdownAmount = drawdown;
+            });
+
+            // Re-calculate Per-Trade metrics for Streaks & Avg Win/Loss
+            const closedTrades = trades.filter(t => t.status === 'closed').sort((a,b) => {
+                const dateA = a.exitDate || (a.history.length ? a.history[a.history.length-1].date : '0000-00-00');
+                const dateB = b.exitDate || (b.history.length ? b.history[b.history.length-1].date : '0000-00-00');
+                return dateA.localeCompare(dateB);
+            });
+
+            let tradeGrossProfit = 0;
+            let tradeGrossLoss = 0;
+            let tradeWinCount = 0;
+            let tradeLossCount = 0;
+
+            closedTrades.forEach(t => {
+                let pnl = 0;
+                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+
+                if(pnl > 0) {
+                    currentWinStreak++;
+                    currentLossStreak = 0;
+                    if(currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
+                    tradeGrossProfit += pnl;
+                    tradeWinCount++;
+                } else {
+                    // Even 0 is considered ending a win streak in this strict logic
+                    currentLossStreak++;
+                    currentWinStreak = 0;
+                    if(currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+                    tradeGrossLoss += Math.abs(pnl);
+                    tradeLossCount++;
+                }
+            });
+
+            // Derived Metrics
+            const profitFactor = tradeGrossLoss === 0 ? (tradeGrossProfit > 0 ? 999 : 0) : (tradeGrossProfit / tradeGrossLoss);
+            const avgWin = tradeWinCount > 0 ? (tradeGrossProfit / tradeWinCount) : 0;
+            const avgLoss = tradeLossCount > 0 ? (tradeGrossLoss / tradeLossCount) : 0;
+            const winRate = (tradeWinCount + tradeLossCount) > 0 ? (tradeWinCount / (tradeWinCount + tradeLossCount)) : 0;
+            const lossRate = 1 - winRate;
+            const expectancy = (winRate * avgWin) - (lossRate * avgLoss);
+
+            return {
+                dailyPnL,
+                monthlyPnL,
+                maxDrawdown,
+                maxDrawdownAmount,
+                profitFactor,
+                avgWin,
+                avgLoss,
+                expectancy,
+                strategyStats,
+                streaks: {
+                    currentWin: currentWinStreak,
+                    maxWin: maxWinStreak,
+                    currentLoss: currentLossStreak,
+                    maxLoss: maxLossStreak
+                },
+                tradeCounts: {
+                    win: tradeWinCount,
+                    loss: tradeLossCount,
+                    total: tradeWinCount + tradeLossCount
+                }
+            };
+        };
+
+        window.exportToCSV = () => {
+            if (!trades || trades.length === 0) {
+                window.showToast('無交易紀錄可匯出', 'warning');
+                return;
+            }
+
+            const headers = ['ID', '代號', '名稱', '類型', '日期', '價格', '股數', '手續費(含稅)', '淨損益', '備註', '策略', '人格', '風度'];
+            const rows = [];
+
+            trades.forEach(t => {
+                t.history.forEach(h => {
+                     const type = h.type === 'buy' ? 'Buy' : 'Sell';
+                     let fee = 0;
+                     let pnl = 0;
+
+                     if(h.type === 'buy') {
+                         fee = window.calculateCost(h.price, h.quantity, 'buy');
+                     } else {
+                         // calculateCost returns fee + tax for sell
+                         fee = window.calculateCost(h.price, h.quantity, 'sell');
+                         pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                     }
+
+                     rows.push([
+                         t.id,
+                         t.symbolCode,
+                         t.symbolName,
+                         type,
+                         h.date,
+                         h.price,
+                         h.quantity,
+                         fee,
+                         h.type === 'sell' ? Math.round(pnl) : '',
+                         `"${(h.note || '').replace(/"/g, '""')}"`,
+                         `"${t.strategyName}"`,
+                         t.persona,
+                         h.wind || t.entryWind
+                     ]);
+                });
+            });
+
+            let csvContent = "\uFEFF";
+            csvContent += headers.join(",") + "\n";
+            rows.forEach(r => csvContent += r.join(",") + "\n");
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `kite_trades_${window.getLocalISODate()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
         // Strategy Logic
         window.renderStrategyPage = () => {
+            const stats = window.calculateAdvancedStats(trades);
             const closedTrades = trades.filter(t => t.status === 'closed');
             
             const personaStats = { freelancer: 0, office: 0, boss: 0 };
@@ -2063,11 +2342,86 @@
                 document.getElementById('worst-combo-desc').textContent = "暫無顯著虧損組合。";
             }
 
+            // Populate Advanced Stats
+            document.getElementById('stat-mdd').textContent = (stats.maxDrawdown * 100).toFixed(2) + '%';
+            document.getElementById('stat-mdd-amt').textContent = '-$' + formatLargeNumber(stats.maxDrawdownAmount);
+
+            document.getElementById('stat-pf').textContent = stats.profitFactor.toFixed(2);
+
+            const rrRatio = stats.avgLoss === 0 ? (stats.avgWin > 0 ? '∞' : '0') : (stats.avgWin / stats.avgLoss).toFixed(2);
+            document.getElementById('stat-rr').textContent = rrRatio;
+            document.getElementById('stat-expectancy').textContent = 'Exp: $' + Math.round(stats.expectancy);
+
+            document.getElementById('stat-streak-win').textContent = stats.streaks.currentWin > 0 ? 'W' + stats.streaks.currentWin : '-';
+            document.getElementById('stat-streak-loss').textContent = stats.streaks.currentLoss > 0 ? 'L' + stats.streaks.currentLoss : '-';
+            document.getElementById('stat-streak-max').textContent = `Max: W${stats.streaks.maxWin} / L${stats.streaks.maxLoss}`;
+
+            // Render Strategy Ranking
+            const stratList = document.getElementById('strategy-ranking-list');
+            const sortedStrats = Object.entries(stats.strategyStats).sort((a,b) => b[1].pnl - a[1].pnl);
+
+            stratList.innerHTML = sortedStrats.map(([name, s], i) => {
+                const pnlClass = s.pnl >= 0 ? 'text-red-500' : 'text-green-500';
+                const winRate = Math.round((s.wins / s.count) * 100);
+                const pColor = personas[s.persona]?.color || '#94a3b8';
+
+                return `
+                <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-[0.625rem] font-black text-white" style="background-color: ${pColor}">${i+1}</div>
+                        <div>
+                            <p class="text-sm font-black text-slate-700 dark:text-slate-200">${name}</p>
+                            <p class="text-[0.625rem] font-bold text-slate-400">${s.count} 筆交易 | 勝率 ${winRate}%</p>
+                        </div>
+                    </div>
+                    <p class="text-sm font-black ${pnlClass}">$${formatLargeNumber(s.pnl)}</p>
+                </div>`;
+            }).join('') || '<p class="text-xs text-slate-400 text-center py-4 font-bold">尚無交易數據</p>';
+
             renderStrategyMatrix(closedTrades);
             renderEquityChart();
+            renderMonthlyPnlChart(stats);
             renderWinRateChart(closedTrades);
             renderHoldingStats(closedTrades);
             renderMistakeStats(closedTrades);
+        };
+
+        window.renderMonthlyPnlChart = (stats) => {
+            const ctx = document.getElementById('monthlyPnlChart').getContext('2d');
+            if (window.monthlyChartInstance) window.monthlyChartInstance.destroy();
+
+            const labels = Object.keys(stats.monthlyPnL).sort();
+            const data = labels.map(m => stats.monthlyPnL[m]);
+            const colors = data.map(v => v >= 0 ? '#ef4444' : '#22c55e');
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            window.monthlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Monthly Net P&L',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor } },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, callback: function(value) { return '$' + formatLargeNumber(value); } }
+                        }
+                    }
+                }
+            });
         };
 
         window.renderWinRateChart = (trades) => {
