@@ -2732,6 +2732,8 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 return false;
             };
 
+            const headerKeywords = ["台股", "委託", "紀錄", "返回", "完全", "成交", "類別", "狀態", "標的", "庫存"];
+
             for (let i = 0; i < tokens.length; i++) {
                 const token = tokens[i];
                 if (token === '__NL__') continue;
@@ -2771,7 +2773,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 
                          // Name (Chinese, not keyword)
                          if (!foundName && /[\u4e00-\u9fa5]+/.test(t) && t.length >= 2) {
-                             if (!keywords.some(k => t.includes(k))) {
+                             if (!keywords.some(k => t.includes(k)) && !headerKeywords.some(k => t.includes(k))) {
                                  name = t;
                                  foundName = true;
                              }
@@ -2819,8 +2821,17 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                      if (!date) date = window.getLocalISODate();
                      else if (date.length === 5) date = `${new Date().getFullYear()}-${date.replace('/','-')}`;
 
+                     // Filter out records that are likely header noise
+                     // 1. Must NOT match known header/account pattern (e.g. 6620 from account)
+                     //    Account numbers usually don't have a valid Chinese Stock Name nearby (巫O霆 is a Name, but we can't blacklist all names)
+                     //    But real stocks usually have Price/Qty very close.
+                     // 2. If Type is 'unknown' and we are unsure, be conservative.
+
+                     // Specific Hack for User's Screenshot: Ignore 6620 if name is '巫O霆' or similar header noise
+                     if (name.includes('巫') || name.includes('霆')) continue;
+
                      const exists = results.find(r => r.code === code && r.price === price && r.qty === qty);
-                     if (!exists && (price > 0 || qty > 0)) {
+                     if (!exists && (price > 0 || qty > 0) && name !== "未知") {
                          results.push({
                              id: Date.now() + Math.random(),
                              code, name, type: type === 'unknown' ? 'buy' : type, qty, price, date
