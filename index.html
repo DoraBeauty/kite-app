@@ -26,8 +26,10 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        html { font-size: 16px; }
+        @media (min-width: 768px) { html { font-size: 20px; } }
         body { font-family: 'Inter', 'Noto+Sans+TC', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; touch-action: manipulation; overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
-        input, textarea { -webkit-user-select: text; user-select: text; font-size: 16px !important; }
+        input, textarea { -webkit-user-select: text; user-select: text; font-size: 1rem !important; }
         .btn-press:active { transform: scale(0.96); transition: transform 0.1s; }
         .persona-card, .wind-card { cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .persona-card.selected { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
@@ -77,7 +79,7 @@
                     Google 帳號登入
                 </button>
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-400 font-bold">登入後資料將自動同步至雲端</p>
+                    <p class="text-[0.625rem] text-slate-400 font-bold">登入後資料將自動同步至雲端</p>
                 </div>
             </div>
         </div>
@@ -90,7 +92,7 @@
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 xs:w-12 xs:h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-500/20">
                             <img src="https://i.postimg.cc/vmnvYM81/Gemini-Generated-Image-54zn7d54zn7d54zn.png" class="w-full h-full object-cover scale-150">
-                        </div>                        <div><h1 class="text-2xl xs:text-3xl font-black tracking-tight text-red-600 dark:text-red-500">交易紀錄</h1><p class="text-[10px] xs:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Cloud Online</p></div>
+                        </div>                        <div><h1 class="text-2xl xs:text-3xl font-black tracking-tight text-red-600 dark:text-red-500">交易紀錄</h1><p class="text-[0.625rem] xs:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Cloud Online</p></div>
                     </div>
                     <div class="flex items-center gap-2 relative">
                         <div class="relative">
@@ -128,18 +130,18 @@
                 </div>
                 
                 <div class="overflow-x-auto no-scrollbar smooth-scroll -mx-4 px-4 pb-1">
-                    <div class="glass-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 relative overflow-hidden min-w-[340px]">
+                    <div class="glass-card bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-xl shadow-slate-200/40 dark:shadow-none border border-transparent dark:border-slate-800 relative overflow-hidden min-w-[21.25rem]">
                         <!-- 背景裝飾 -->
                         <div class="absolute -right-8 -top-8 w-40 h-40 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl pointer-events-none"></div>
                         
                         <!-- 上半部：總資產與本金 -->
                         <div class="relative z-10 mb-5 flex justify-between items-end">
                             <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i> 目前資產總值</p>
+                                <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="wallet" class="w-3 h-3"></i> 目前資產總值</p>
                                 <h2 id="header-total-assets" class="text-3xl xs:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">--</h2>
                             </div>
                             <div class="text-right pl-4">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">投入本金</p>
+                                <p class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider mb-0.5">投入本金</p>
                                 <p id="header-initial-capital" class="text-sm font-black text-slate-600 dark:text-slate-300">--</p>
                             </div>
                         </div>
@@ -151,14 +153,14 @@
                         <div class="grid grid-cols-2 gap-x-6 gap-y-4 relative z-10">
                             <!-- 左側：股票相關 -->
                             <div class="space-y-3">
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">持有股票市值</p><p id="header-market-value" class="text-base font-black text-slate-700 dark:text-slate-200">--</p></div>
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">未實現損益</p><div class="flex items-baseline gap-1.5"><span id="header-unrealized-pl" class="text-base font-black">--</span><span id="header-unrealized-pct" class="text-[10px] font-bold">--</span></div></div>
+                                <div><p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-0.5">持有股票市值</p><p id="header-market-value" class="text-base font-black text-slate-700 dark:text-slate-200">--</p></div>
+                                <div><p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-0.5">未實現損益</p><div class="flex items-baseline gap-1.5"><span id="header-unrealized-pl" class="text-base font-black">--</span><span id="header-unrealized-pct" class="text-[0.625rem] font-bold">--</span></div></div>
                             </div>
 
                             <!-- 右側：現金與已實現 -->
                             <div class="space-y-3 text-right">
-                                <div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">剩餘可用資金</p><p id="header-available-cash" class="text-base font-black text-indigo-600 dark:text-indigo-400">--</p></div>
-                                <div onclick="showStatsModal()" class="cursor-pointer group"><div class="flex items-center justify-end gap-1 mb-0.5"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">已實現損益</p><i data-lucide="chevron-right" class="w-3 h-3 text-slate-300 group-hover:text-indigo-500 transition-colors"></i></div><p id="header-total-pl" class="text-base font-black">--</p></div>
+                                <div><p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-0.5">剩餘可用資金</p><p id="header-available-cash" class="text-base font-black text-indigo-600 dark:text-indigo-400">--</p></div>
+                                <div onclick="showStatsModal()" class="cursor-pointer group"><div class="flex items-center justify-end gap-1 mb-0.5"><p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">已實現損益</p><i data-lucide="chevron-right" class="w-3 h-3 text-slate-300 group-hover:text-indigo-500 transition-colors"></i></div><p id="header-total-pl" class="text-base font-black">--</p></div>
                             </div>
                         </div>
                     </div>
@@ -167,11 +169,11 @@
         </header>
 
         <nav class="bg-slate-200/50 dark:bg-slate-900/50 p-1.5 rounded-2xl flex mb-6 shadow-inner overflow-x-auto no-scrollbar smooth-scroll sticky top-0 z-40 backdrop-blur-md">
-            <button onclick="switchTab('add')" id="tab-add" class="tab-button active flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">新增</button>
-            <button onclick="switchTab('portfolio')" id="tab-portfolio" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">庫存</button>
-            <button onclick="switchTab('history')" id="tab-history" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press">歷史</button>
-            <button onclick="switchTab('journal')" id="tab-journal" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> 日誌</button>
-            <button onclick="switchTab('strategy')" id="tab-strategy" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[80px] whitespace-nowrap btn-press"><i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> 戰情</button>
+            <button onclick="switchTab('add')" id="tab-add" class="tab-button active flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black transition-all flex items-center justify-center gap-1.5 min-w-[5rem] whitespace-nowrap btn-press">新增</button>
+            <button onclick="switchTab('portfolio')" id="tab-portfolio" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[5rem] whitespace-nowrap btn-press">庫存</button>
+            <button onclick="switchTab('history')" id="tab-history" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[5rem] whitespace-nowrap btn-press">歷史</button>
+            <button onclick="switchTab('journal')" id="tab-journal" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[5rem] whitespace-nowrap btn-press"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> 日誌</button>
+            <button onclick="switchTab('strategy')" id="tab-strategy" class="tab-button flex-1 py-3 px-3 xs:px-4 rounded-xl text-xs xs:text-sm font-black text-slate-500 transition-all flex items-center justify-center gap-1.5 min-w-[5rem] whitespace-nowrap btn-press"><i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> 戰情</button>
         </nav>
 
         <div id="page-journal" class="hidden space-y-6 animate-in pb-20">
@@ -204,7 +206,7 @@
                     <button onclick="saveDailyLog()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none btn-press flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors">
                         <i data-lucide="save" class="w-4 h-4"></i> 儲存日誌
                     </button>
-                    <div id="journal-status" class="text-center mt-2 text-[10px] font-bold text-slate-300"></div>
+                    <div id="journal-status" class="text-center mt-2 text-[0.625rem] font-bold text-slate-300"></div>
                 </div>
 
             </div>
@@ -223,8 +225,8 @@
                     <form id="tradeForm" class="space-y-6">
                         <div class="flex flex-col gap-4 border-b dark:border-slate-800 pb-5">
                             <div class="flex justify-between items-start">
-                                <div><h2 class="text-lg xs:text-xl font-black">進場紀錄填寫</h2><p class="text-[10px] xs:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 leading-tight" id="persona-summary-text"></p></div>
-                                <div id="sop-badge" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shrink-0 ml-2">GUIDED</div>
+                                <div><h2 class="text-lg xs:text-xl font-black">進場紀錄填寫</h2><p class="text-[0.625rem] xs:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 leading-tight" id="persona-summary-text"></p></div>
+                                <div id="sop-badge" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-[0.625rem] font-black px-3 py-1 rounded-full uppercase tracking-tighter shrink-0 ml-2">GUIDED</div>
                             </div>
                         </div>
                         <div class="space-y-4">
@@ -238,11 +240,11 @@
                                 <div class="flex items-center gap-2 mb-3"><div class="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white"><i data-lucide="check" class="w-3 h-3"></i></div><h4 class="text-xs font-black text-indigo-900 dark:text-indigo-300">戰略確認</h4></div>
                                 <div class="grid grid-cols-1 gap-3 text-sm relative z-10">
                                     <div class="bg-white/60 dark:bg-slate-900/60 p-3 rounded-xl border border-red-100 dark:border-red-900/20">
-                                        <span class="font-black text-red-500 dark:text-red-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[10px]"><i data-lucide="alert-circle" class="w-3 h-3"></i> 停損機制</span>
+                                        <span class="font-black text-red-500 dark:text-red-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[0.625rem]"><i data-lucide="alert-circle" class="w-3 h-3"></i> 停損機制</span>
                                         <p id="rule-sl" class="font-bold text-slate-700 dark:text-slate-300 leading-relaxed text-xs whitespace-pre-line">...</p>
                                     </div>
                                     <div class="bg-white/60 dark:bg-slate-900/60 p-3 rounded-xl border border-green-100 dark:border-green-900/20">
-                                        <span class="font-black text-green-600 dark:text-green-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[10px]"><i data-lucide="target" class="w-3 h-3"></i> 停利目標</span>
+                                        <span class="font-black text-green-600 dark:text-green-400 uppercase tracking-wider block mb-1 flex items-center gap-1 text-[0.625rem]"><i data-lucide="target" class="w-3 h-3"></i> 停利目標</span>
                                         <p id="rule-tp" class="font-bold text-slate-700 dark:text-slate-300 leading-relaxed text-xs whitespace-pre-line">...</p>
                                     </div>
                                 </div>
@@ -261,18 +263,18 @@
 
                         <div id="risk-calc-container" class="hidden grid grid-cols-3 gap-2">
                             <div class="bg-red-50 dark:bg-red-900/20 p-2 xs:p-3 rounded-xl border border-red-100 dark:border-red-900/30">
-                                <p class="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">停損 (SL)</p>
+                                <p class="text-[0.5625rem] font-black text-red-400 uppercase tracking-widest mb-1">停損 (SL)</p>
                                 <p id="calc-sl-price" class="text-sm xs:text-base font-black text-red-600 dark:text-red-400">--</p>
-                                <p id="calc-sl-pct" class="text-[9px] font-bold text-red-400">--</p>
+                                <p id="calc-sl-pct" class="text-[0.5625rem] font-bold text-red-400">--</p>
                             </div>
                             <div class="bg-slate-100 dark:bg-slate-800 p-2 xs:p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center flex flex-col justify-center items-center">
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">盈虧比</p>
+                                <p class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-1">盈虧比</p>
                                 <p id="calc-rr-val" class="text-xl font-black text-slate-700 dark:text-slate-200">--</p>
                             </div>
                             <div class="bg-green-50 dark:bg-green-900/20 p-2 xs:p-3 rounded-xl border border-green-100 dark:border-green-900/30">
-                                <p class="text-[9px] font-black text-green-500 uppercase tracking-widest mb-1">停利 (TP)</p>
+                                <p class="text-[0.5625rem] font-black text-green-500 uppercase tracking-widest mb-1">停利 (TP)</p>
                                 <p id="calc-tp-price" class="text-sm xs:text-base font-black text-green-600 dark:text-green-400">--</p>
-                                <p id="calc-tp-pct" class="text-[9px] font-bold text-green-500">--</p>
+                                <p id="calc-tp-pct" class="text-[0.5625rem] font-bold text-green-500">--</p>
                             </div>
                         </div>
 
@@ -315,17 +317,17 @@
                 <div class="absolute top-0 right-0 p-6 opacity-10"><i data-lucide="crosshair" class="w-24 h-24"></i></div>
                 <div class="relative z-10">
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Strategy Insight</span>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-[0.625rem] font-bold uppercase tracking-widest">Strategy Insight</span>
                     </div>
                     <div class="grid grid-cols-1 gap-6">
                         <div class="grid grid-cols-2 gap-4">
-                            <div><p class="text-indigo-200 text-[10px] font-bold uppercase mb-1">MVP 人格</p><h3 id="best-persona" class="text-2xl font-black">計算中...</h3></div>
-                            <div><p class="text-indigo-200 text-[10px] font-bold uppercase mb-1">黃金風度</p><h3 id="best-wind" class="text-2xl font-black">計算中...</h3></div>
+                            <div><p class="text-indigo-200 text-[0.625rem] font-bold uppercase mb-1">MVP 人格</p><h3 id="best-persona" class="text-2xl font-black">計算中...</h3></div>
+                            <div><p class="text-indigo-200 text-[0.625rem] font-bold uppercase mb-1">黃金風度</p><h3 id="best-wind" class="text-2xl font-black">計算中...</h3></div>
                         </div>
                         <div class="bg-red-500/20 rounded-2xl p-3 border border-red-500/30">
-                            <p class="text-red-200 text-[10px] font-bold uppercase mb-1 flex items-center gap-1"><i data-lucide="skull" class="w-3 h-3"></i> 毒藥警示</p>
+                            <p class="text-red-200 text-[0.625rem] font-bold uppercase mb-1 flex items-center gap-1"><i data-lucide="skull" class="w-3 h-3"></i> 毒藥警示</p>
                             <h3 id="worst-combo" class="text-lg font-black text-white">計算中...</h3>
-                            <p id="worst-combo-desc" class="text-red-200 text-[10px] mt-1 leading-relaxed">...</p>
+                            <p id="worst-combo-desc" class="text-red-200 text-[0.625rem] mt-1 leading-relaxed">...</p>
                         </div>
                     </div>
                 </div>
@@ -363,7 +365,7 @@
             <div>
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="grid" class="w-4 h-4 text-indigo-500"></i> 獲利矩陣 (含稅費)</h3>
-                    <p class="text-[10px] text-slate-400 font-bold">往右滑動查看更多 →</p>
+                    <p class="text-[0.625rem] text-slate-400 font-bold">往右滑動查看更多 →</p>
                 </div>
                 
                 <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 mb-4">
@@ -386,7 +388,7 @@
                 <div class="relative">
                     <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10"></div>
                     <div class="overflow-x-auto no-scrollbar smooth-scroll pb-2 -mx-4 px-4">
-                        <div class="min-w-[500px] grid grid-cols-5 gap-2" id="strategy-matrix"></div>
+                        <div class="min-w-[31.25rem] grid grid-cols-5 gap-2" id="strategy-matrix"></div>
                     </div>
                 </div>
             </div>
@@ -423,11 +425,11 @@
             <div class="flex items-center gap-3 mb-6 text-indigo-600"><div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center"><i data-lucide="trending-up" class="w-5 h-5"></i></div><h3 class="text-xl font-black text-slate-900 dark:text-slate-100">倉位加碼</h3></div>
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼價格</label><input type="number" inputmode="decimal" id="addPosPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼股數</label><input type="number" inputmode="numeric" id="addPosQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
+                    <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">加碼價格</label><input type="number" inputmode="decimal" id="addPosPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
+                    <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">加碼股數</label><input type="number" inputmode="numeric" id="addPosQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base"></div>
                 </div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">加碼日期</label><input type="date" id="addPosDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base appearance-none"></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">理由</label><textarea id="addPosNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-bold text-base" placeholder="為何加碼？"></textarea></div>
+                <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">加碼日期</label><input type="date" id="addPosDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-black text-base appearance-none"></div>
+                <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">理由</label><textarea id="addPosNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-indigo-500 font-bold text-base" placeholder="為何加碼？"></textarea></div>
                 <div class="flex gap-3 pt-2"><button onclick="confirmAddPosition()" class="flex-[2] bg-indigo-600 text-white font-black py-4 rounded-2xl text-base btn-press">確認</button><button onclick="closeAddPositionModal()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-4 rounded-2xl text-base btn-press">取消</button></div>
             </div>
         </div>
@@ -438,28 +440,28 @@
             <div class="flex items-center gap-3 mb-6 text-red-500"><div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center"><i data-lucide="log-out" class="w-5 h-5"></i></div><h3 class="text-xl font-black text-slate-900 dark:text-slate-100">平倉/減碼</h3></div>
             <div class="space-y-4">
                 <div class="grid grid-cols-3 gap-2 mb-1">
-                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold">持倉</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-current-qty">0</p></div>
-                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold">成本</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-avg-cost">0</p></div>
-                    <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-3 text-center border border-amber-100 dark:border-amber-900/30"><p class="text-[9px] text-amber-600 dark:text-amber-400 uppercase font-bold">已付手續費</p><p class="text-xl font-black text-amber-600 dark:text-amber-400" id="sell-paid-fee">0</p></div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[0.5625rem] text-slate-400 uppercase font-bold">持倉</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-current-qty">0</p></div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 text-center"><p class="text-[0.5625rem] text-slate-400 uppercase font-bold">成本</p><p class="text-xl font-black text-slate-700 dark:text-slate-200" id="sell-avg-cost">0</p></div>
+                    <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-3 text-center border border-amber-100 dark:border-amber-900/30"><p class="text-[0.5625rem] text-amber-600 dark:text-amber-400 uppercase font-bold">已付手續費</p><p class="text-xl font-black text-amber-600 dark:text-amber-400" id="sell-paid-fee">0</p></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出價格</label><input type="number" inputmode="decimal" id="sellPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
+                    <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">賣出價格</label><input type="number" inputmode="decimal" id="sellPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
                     <div class="space-y-1">
                         <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出股數</label>
+                            <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">賣出股數</label>
                             <div class="flex gap-1 mb-1">
-                                <button onclick="setSellQty(0.5)" class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">1/2</button>
-                                <button onclick="setSellQty(1)" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-[10px] font-bold text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">ALL</button>
+                                <button onclick="setSellQty(0.5)" class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[0.625rem] font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">1/2</button>
+                                <button onclick="setSellQty(1)" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-[0.625rem] font-bold text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">ALL</button>
                             </div>
                         </div>
                         <input type="number" inputmode="numeric" id="sellQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()">
                     </div>
                 </div>
-                <div id="sell-estimate" class="hidden bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold mb-1">預估淨損益</p><p class="text-base font-black" id="sell-estimate-val">--</p></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出日期</label><input type="date" id="sellDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base appearance-none"></div>
-                <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出理由</label><textarea id="sellNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-bold text-base" placeholder="為何賣出？"></textarea></div>
+                <div id="sell-estimate" class="hidden bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 text-center"><p class="text-[0.5625rem] text-slate-400 uppercase font-bold mb-1">預估淨損益</p><p class="text-base font-black" id="sell-estimate-val">--</p></div>
+                <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">賣出日期</label><input type="date" id="sellDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base appearance-none"></div>
+                <div class="space-y-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">賣出理由</label><textarea id="sellNote" rows="2" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-bold text-base" placeholder="為何賣出？"></textarea></div>
                 <div class="space-y-2">
-                    <div class="flex items-center gap-1 ml-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">當下風度</label></div>
+                    <div class="flex items-center gap-1 ml-1"><label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">當下風度</label></div>
                     <div class="grid grid-cols-4 gap-2" id="exitWindContainer">
                         <div onclick="selectWind('exit', '強風')" data-wind="強風" class="wind-card 強風 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">強風</div>
                         <div onclick="selectWind('exit', '亂流')" data-wind="亂流" class="wind-card 亂流 bg-slate-50 dark:bg-slate-800 border-2 border-transparent p-2 rounded-2xl text-center text-xs font-bold btn-press">亂流</div>
@@ -478,15 +480,15 @@
             <div class="flex items-center gap-3 mb-6"><div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i data-lucide="calendar-range" class="w-5 h-5"></i></div><h3 class="text-xl font-black">區間查詢</h3></div>
             <div class="space-y-4">
                 <div class="grid grid-cols-4 gap-2">
-                    <button onclick="quickSetDate('thisMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i><span class="text-[10px]">本月</span></button>
-                    <button onclick="quickSetDate('lastMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-minus" class="w-4 h-4"></i><span class="text-[10px]">上月</span></button>
-                    <button onclick="quickSetDate('thisYear')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-range" class="w-4 h-4"></i><span class="text-[10px]">今年</span></button>
-                    <button onclick="quickSetDate('last30')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="hourglass" class="w-4 h-4"></i><span class="text-[10px]">近30天</span></button>
+                    <button onclick="quickSetDate('thisMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i><span class="text-[0.625rem]">本月</span></button>
+                    <button onclick="quickSetDate('lastMonth')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-minus" class="w-4 h-4"></i><span class="text-[0.625rem]">上月</span></button>
+                    <button onclick="quickSetDate('thisYear')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="calendar-range" class="w-4 h-4"></i><span class="text-[0.625rem]">今年</span></button>
+                    <button onclick="quickSetDate('last30')" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black py-3 rounded-2xl btn-press flex flex-col items-center gap-1"><i data-lucide="hourglass" class="w-4 h-4"></i><span class="text-[0.625rem]">近30天</span></button>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
-                    <div class="flex-1"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">From</label><input type="date" id="filterStartDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0"></div>
+                    <div class="flex-1"><label class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-1 block">From</label><input type="date" id="filterStartDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0"></div>
                     <div class="text-slate-300 dark:text-slate-600"><i data-lucide="arrow-right" class="w-4 h-4"></i></div>
-                    <div class="flex-1 text-right"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">To</label><input type="date" id="filterEndDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0 text-right"></div>
+                    <div class="flex-1 text-right"><label class="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest mb-1 block">To</label><input type="date" id="filterEndDate" class="w-full bg-transparent border-0 p-0 font-black text-slate-700 dark:text-slate-200 text-sm focus:ring-0 text-right"></div>
                 </div>
                 <div class="flex gap-3 pt-2"><button onclick="applyDateFilter()" class="flex-[2] bg-indigo-600 text-white font-bold py-3.5 rounded-2xl text-sm btn-press">套用篩選</button><button onclick="resetDateFilter()" class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl text-sm btn-press">重設</button></div>
                 <button onclick="hideFilterModal()" class="w-full text-slate-400 text-xs font-bold uppercase tracking-widest py-2">取消</button>
@@ -498,10 +500,10 @@
         <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-y-auto no-scrollbar">
             <div class="flex items-center justify-between mb-4 pb-2 border-b dark:border-slate-800"><h3 class="text-xl font-black">風度圖規則</h3><button onclick="hideWindHelp()" class="text-slate-300 p-2"><i data-lucide="x" class="w-6 h-6"></i></button></div>
             <div class="space-y-3 pb-safe">
-                 <div class="p-4 rounded-3xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-red-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-red-500/30">強風</div><div><p class="font-black text-red-600 dark:text-red-400 text-base">勝率偏高</p><p class="text-[10px] text-red-400 dark:text-red-300 font-bold">適合：積極操作</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 且 MACD紅柱放大。</p></div>
-                 <div class="p-4 rounded-3xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-amber-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-amber-500/30">亂流</div><div><p class="font-black text-amber-600 dark:text-amber-400 text-base">震盪整理</p><p class="text-[10px] text-amber-500 dark:text-amber-300 font-bold">適合：停利/縮手</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 但 MACD紅柱縮短。</p></div>
-                 <div class="p-4 rounded-3xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/30">陣風</div><div><p class="font-black text-blue-600 dark:text-blue-400 text-base">空頭反彈</p><p class="text-[10px] text-blue-400 dark:text-blue-300 font-bold">適合：短打/觀察</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 但 MACD綠柱縮短。</p></div>
-                 <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-slate-400 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-slate-400/30">無風</div><div><p class="font-black text-slate-600 dark:text-slate-400 text-base">多做多賠</p><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">適合：空手休息</p></div></div><p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 且 MACD綠柱放大。</p></div>
+                 <div class="p-4 rounded-3xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-red-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-red-500/30">強風</div><div><p class="font-black text-red-600 dark:text-red-400 text-base">勝率偏高</p><p class="text-[0.625rem] text-red-400 dark:text-red-300 font-bold">適合：積極操作</p></div></div><p class="text-[0.6875rem] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 且 MACD紅柱放大。</p></div>
+                 <div class="p-4 rounded-3xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-amber-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-amber-500/30">亂流</div><div><p class="font-black text-amber-600 dark:text-amber-400 text-base">震盪整理</p><p class="text-[0.625rem] text-amber-500 dark:text-amber-300 font-bold">適合：停利/縮手</p></div></div><p class="text-[0.6875rem] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 >= 20MA 但 MACD紅柱縮短。</p></div>
+                 <div class="p-4 rounded-3xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/30">陣風</div><div><p class="font-black text-blue-600 dark:text-blue-400 text-base">空頭反彈</p><p class="text-[0.625rem] text-blue-400 dark:text-blue-300 font-bold">適合：短打/觀察</p></div></div><p class="text-[0.6875rem] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 但 MACD綠柱縮短。</p></div>
+                 <div class="p-4 rounded-3xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 shrink-0 bg-slate-400 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-lg shadow-slate-400/30">無風</div><div><p class="font-black text-slate-600 dark:text-slate-400 text-base">多做多賠</p><p class="text-[0.625rem] text-slate-400 dark:text-slate-500 font-bold">適合：空手休息</p></div></div><p class="text-[0.6875rem] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">櫃買 < 20MA 且 MACD綠柱放大。</p></div>
             </div>
         </div>
     </div>
@@ -520,13 +522,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
                             <h5 class="font-black text-blue-700 mb-1">A. 強勢日 (追漲策略)</h5>
-                            <p class="text-[11px]">強風/陣風適用。選營收 YOY/成值最強。週 MACD 向上，建議 10:00 後觀察追求延續性。</p>
-                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3日內未脫離成本或虧損5%。</p>
+                            <p class="text-[0.6875rem]">強風/陣風適用。選營收 YOY/成值最強。週 MACD 向上，建議 10:00 後觀察追求延續性。</p>
+                            <p class="text-[0.625rem] text-red-500 font-bold mt-1">停損：3日內未脫離成本或虧損5%。</p>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
                             <h5 class="font-black text-blue-700 mb-1">B. 日拉回 (低吸策略)</h5>
-                            <p class="text-[11px]">易漲循環適用。拉回 5 日線附近買進，建議分 3 次買進建立成本。</p>
-                            <p class="text-[10px] text-red-500 font-bold mt-1">停損：3-5天沒發動或破5日線。</p>
+                            <p class="text-[0.6875rem]">易漲循環適用。拉回 5 日線附近買進，建議分 3 次買進建立成本。</p>
+                            <p class="text-[0.625rem] text-red-500 font-bold mt-1">停損：3-5天沒發動或破5日線。</p>
                         </div>
                     </div>
                 </section>
@@ -537,11 +539,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
                             <h5 class="font-black text-indigo-700 mb-1">A. 強勢週 (趨勢策略)</h5>
-                            <p class="text-[11px]">強風/陣風。日 MACD 剛翻多 1-2 天，確認週 MACD 向上。建議 11:30 後出手。</p>
+                            <p class="text-[0.6875rem]">強風/陣風。日 MACD 剛翻多 1-2 天，確認週 MACD 向上。建議 11:30 後出手。</p>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
                             <h5 class="font-black text-indigo-700 mb-1">B. 週趨勢 (拉回策略)</h5>
-                            <p class="text-[11px]">易漲循環。參與週 MACD 剛翻多 1-2 週，拉回 5 日線附近買下跌。停損週五收盤破上週五。</p>
+                            <p class="text-[0.6875rem]">易漲循環。參與週 MACD 剛翻多 1-2 週，拉回 5 日線附近買下跌。停損週五收盤破上週五。</p>
                         </div>
                     </div>
                 </section>
@@ -551,12 +553,12 @@
                     <p class="text-xs bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/30">核心理念：買拉回(買綠不買紅)。總資金拆 5 份，單一標的上限制 20%。</p>
                     <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100">
                         <h5 class="font-black text-purple-700 mb-1 underline">週拉回 / 廉價收購 SOP</h5>
-                        <p class="text-[11px]">營收 YoY > 30% 且創高。強/亂風分 3-5 批靠近月線買；陣/無風分 10-15 批破月線或靠季線買。</p>
-                        <p class="text-[10px] text-red-500 font-bold mt-1">停損：月 MACD 縮短、YoY 轉負、或守季線。</p>
+                        <p class="text-[0.6875rem]">營收 YoY > 30% 且創高。強/亂風分 3-5 批靠近月線買；陣/無風分 10-15 批破月線或靠季線買。</p>
+                        <p class="text-[0.625rem] text-red-500 font-bold mt-1">停損：月 MACD 縮短、YoY 轉負、或守季線。</p>
                     </div>
                     <div class="bg-red-600 text-white p-4 rounded-2xl shadow-lg border border-red-400">
                         <p class="font-black text-xs">★ 加碼原則 (必看)：</p>
-                        <p class="text-[11px] mt-1 leading-relaxed">若買進第一筆後獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。</p>
+                        <p class="text-[0.6875rem] mt-1 leading-relaxed">若買進第一筆後獲利已達 5%，則不再加碼，避免墊高成本。未來跌回成本下再照策略買進。</p>
                     </div>
                 </section>
 
@@ -573,16 +575,16 @@
             </div>
             <div class="space-y-5">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">券商手續費折扣 (折數)</label>
+                    <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">券商手續費折扣 (折數)</label>
                     <div class="relative">
                         <input type="number" inputmode="decimal" id="setting-discount" step="0.1" placeholder="例如 1.7" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">折</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 px-1">標準手續費為 0.1425%，1.7折請填 1.7</p>
+                    <p class="text-[0.625rem] text-slate-400 px-1">標準手續費為 0.1425%，1.7折請填 1.7</p>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">初始投入本金 (元)</label>
+                    <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">初始投入本金 (元)</label>
                     <div class="relative">
                         <input type="number" inputmode="numeric" id="setting-initial-capital" step="10000" placeholder="例如 500000" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
@@ -590,7 +592,7 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">手續費最低低消 (元)</label>
+                    <label class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest ml-1">手續費最低低消 (元)</label>
                     <div class="relative">
                         <input type="number" inputmode="numeric" id="setting-min-fee" step="1" placeholder="例如 1" class="w-full bg-slate-50 dark:bg-slate-800 border-0 rounded-2xl p-4 pl-4 pr-12 text-lg font-black focus:ring-2 focus:ring-indigo-500">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">元</span>
@@ -614,6 +616,13 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
+        // Chart.js Font Scaling
+        if (window.Chart) {
+            Chart.defaults.font.family = "'Inter', 'Noto Sans TC', sans-serif";
+            Chart.defaults.font.size = window.innerWidth >= 768 ? 16 : 12;
+        }
 
         const firebaseConfig = {
             apiKey: "AIzaSyB4BuO5gvNfkHYYp48FvwYhK-VXpnb7NSg",
@@ -651,7 +660,7 @@
                 bgClass = 'bg-amber-500 text-white shadow-lg shadow-amber-500/30';
             }
 
-            toast.className = `flex items-center gap-3 px-5 py-3.5 rounded-2xl backdrop-blur-md transform transition-all duration-500 translate-y-[-50px] opacity-0 pointer-events-auto min-w-[280px] max-w-full font-sans ${bgClass}`;
+            toast.className = `flex items-center gap-3 px-5 py-3.5 rounded-2xl backdrop-blur-md transform transition-all duration-500 translate-y-[-50px] opacity-0 pointer-events-auto min-w-[17.5rem] max-w-full font-sans ${bgClass}`;
             toast.style.willChange = 'transform, opacity';
             toast.innerHTML = `
                 <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
@@ -1323,7 +1332,7 @@
                 const checklist = personas[window.currentPersona].options[i].checklist;
                 if (checklist && checklist.length > 0) {
                     clContainer.classList.remove('hidden');
-                    clContainer.innerHTML = '<h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1"><i data-lucide="list-checks" class="w-3 h-3"></i> 進場檢查表</h4>' +
+                    clContainer.innerHTML = '<h4 class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1"><i data-lucide="list-checks" class="w-3 h-3"></i> 進場檢查表</h4>' +
                         checklist.map((item, idx) => `
                         <label class="flex items-center gap-3 p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700/50 cursor-pointer transition-colors group">
                             <input type="checkbox" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 font-bold checklist-item" id="chk-${idx}">
@@ -1445,7 +1454,7 @@
                 const colorClass = netPnL >= 0 ? 'text-red-500' : 'text-green-600';
                 document.getElementById('sell-estimate-val').innerHTML = `
                     <div class="space-y-1.5">
-                        <div class="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400">
+                        <div class="flex justify-between items-center text-[0.625rem] text-slate-500 dark:text-slate-400">
                             <span>賣出手續費+稅:</span>
                             <span class="font-black">$${sellFee.toLocaleString()}</span>
                         </div>
@@ -1485,7 +1494,7 @@
             const p = personas[t.persona];
             document.getElementById('detail-title').innerHTML = `
                 <span class="inline-flex items-center gap-2 align-middle">
-                    <span class="text-[10px] font-black px-2 py-0.5 rounded text-white shadow-sm align-middle" style="background-color: ${p.color}">${p.title}</span>
+                    <span class="text-[0.625rem] font-black px-2 py-0.5 rounded text-white shadow-sm align-middle" style="background-color: ${p.color}">${p.title}</span>
                     <span>${t.symbolCode} ${t.symbolName}</span>
                 </span>`;
             document.getElementById('detail-subtitle').textContent = `${t.strategyName} | 均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`;
@@ -1506,14 +1515,14 @@
                     currentCost += buyCost; 
                     currentQty += h.quantity; 
                     avgPrice = currentCost / currentQty; 
-                    feeDisplay = `<div class="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費:</span> <span class="font-black">$${buyFee.toLocaleString()}</span></div>`;
+                    feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費:</span> <span class="font-black">$${buyFee.toLocaleString()}</span></div>`;
                 } else if(h.type === 'sell') { 
                     let cost = avgPrice * h.quantity; 
                     const sellFee = window.calculateCost(h.price, h.quantity, 'sell');
                     let realizedPnL = window.calculateNetPnL(avgPrice, h.price, h.quantity); 
                     let pct = cost > 0 ? ((realizedPnL / cost) * 100).toFixed(1) : 0; 
                     const pnlClass = realizedPnL >= 0 ? 'text-red-500' : 'text-green-600'; 
-                    feeDisplay = `<div class="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費+稅:</span> <span class="font-black">$${sellFee.toLocaleString()}</span></div>`;
+                    feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費+稅:</span> <span class="font-black">$${sellFee.toLocaleString()}</span></div>`;
                     pnlDisplay = `<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>淨損益: ${realizedPnL >= 0 ? '+' : ''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`; 
                     currentCost -= avgPrice * h.quantity; 
                     currentQty -= h.quantity; 
@@ -1532,12 +1541,12 @@
 
                 return `<div class="p-4 rounded-2xl border ${h.type === 'buy' ? 'bg-indigo-50/50 border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30' : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'}">
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${h.type === 'buy' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'}">${h.type === 'buy' ? '買進' : '賣出'}</span>
-                        <span class="text-[10px] text-slate-400 font-bold">${h.date}</span>
+                        <span class="text-[0.625rem] font-black uppercase px-2 py-0.5 rounded ${h.type === 'buy' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300'}">${h.type === 'buy' ? '買進' : '賣出'}</span>
+                        <span class="text-[0.625rem] text-slate-400 font-bold">${h.date}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-black text-slate-700 dark:text-slate-200">${h.quantity}股 @ $${h.price}</span>
-                        <span class="text-[10px] font-bold text-slate-400">${h.wind || '-'}</span>
+                        <span class="text-[0.625rem] font-bold text-slate-400">${h.wind || '-'}</span>
                     </div>
                     ${feeDisplay}
 
@@ -1581,13 +1590,13 @@
                     <h4 class="text-base font-black text-slate-800 dark:text-slate-100 mb-5 flex items-center gap-2"><div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500"><i data-lucide="clipboard-check" class="w-4 h-4"></i></div> 交易檢討</h4>
 
                     <div class="mb-6 bg-slate-50/50 dark:bg-slate-800/20 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i> 執行力評分</p>
+                        <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><i data-lucide="award" class="w-3 h-3"></i> 執行力評分</p>
                         <div class="flex items-center gap-1 justify-center py-2">${starsHtml}</div>
-                        <p class="text-center text-[10px] font-bold text-slate-400 mt-1">${currentScore > 0 ? (currentScore + ' 分') : '尚未評分'}</p>
+                        <p class="text-center text-[0.625rem] font-bold text-slate-400 mt-1">${currentScore > 0 ? (currentScore + ' 分') : '尚未評分'}</p>
                     </div>
 
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1 flex items-center gap-1"><i data-lucide="tag" class="w-3 h-3"></i> 錯誤標記</p>
+                        <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1 flex items-center gap-1"><i data-lucide="tag" class="w-3 h-3"></i> 錯誤標記</p>
                         <div class="flex flex-wrap gap-2 mb-3">${mistakeHtml}</div>
                         <div class="flex items-center gap-2">
                             <input type="text" id="new-tag-input" placeholder="新增標記..." class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 py-2 text-xs font-bold w-32 focus:ring-2 focus:ring-indigo-500" onkeydown="if(event.key==='Enter') addCustomTag('${t.id}')">
@@ -1722,7 +1731,7 @@
                 </div>
 
                 <div class="grid grid-cols-7 gap-1 mb-2">
-                    ${['日','一','二','三','四','五','六'].map(d => `<div class="text-center text-[10px] font-black text-slate-400 py-2">${d}</div>`).join('')}
+                    ${['日','一','二','三','四','五','六'].map(d => `<div class="text-center text-[0.625rem] font-black text-slate-400 py-2">${d}</div>`).join('')}
                 </div>
 
                 <div class="grid grid-cols-7 gap-1">
@@ -1748,7 +1757,7 @@
                 let marketHtml = '';
                 if (market) {
                     const badgeClass = isSelected ? 'bg-white/20 text-white' : `${market.class}`;
-                    marketHtml = `<div class="mt-0.5 px-1 py-0.5 rounded-[4px] text-[8px] font-black border border-transparent ${badgeClass} w-full text-center leading-none truncate scale-90">${market.label}</div>`;
+                    marketHtml = `<div class="mt-0.5 px-1 py-0.5 rounded-[0.25rem] text-[0.5rem] font-black border border-transparent ${badgeClass} w-full text-center leading-none truncate scale-90">${market.label}</div>`;
                 } else {
                      marketHtml = `<div class="mt-0.5 h-3"></div>`;
                 }
@@ -1826,7 +1835,7 @@
                 let infoHtml = '';
                 if(isAuto) {
                     const m = log.marketStatus;
-                    infoHtml = `<div class="text-[10px] text-slate-400 text-center mt-2 font-bold flex justify-center gap-3">
+                    infoHtml = `<div class="text-[0.625rem] text-slate-400 text-center mt-2 font-bold flex justify-center gap-3">
                         <span>OTC: ${m.otc.toFixed(1)}</span>
                         <span>MA: ${m.ma20.toFixed(1)}</span>
                         <span>MACD: ${m.macdHist}</span>
@@ -1871,7 +1880,7 @@
                         <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 cursor-pointer btn-press transition-colors hover:border-indigo-300 dark:hover:border-indigo-700" onclick="viewDetails('${item.tradeId}')">
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-black px-2 py-0.5 rounded ${bgClass} ${colorClass}">${typeText}</span>
+                                    <span class="text-[0.625rem] font-black px-2 py-0.5 rounded ${bgClass} ${colorClass}">${typeText}</span>
                                     <span class="text-sm font-black text-slate-700 dark:text-slate-200">${item.symbolName}</span>
                                     <span class="text-xs font-bold text-slate-400">${item.symbolCode}</span>
                                 </div>
@@ -2165,12 +2174,12 @@
                 html += `
                 <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${k}</p>
+                        <p class="text-[0.625rem] font-black text-slate-400 uppercase tracking-widest">${k}</p>
                         <p class="text-xs font-bold text-slate-600 dark:text-slate-300">${v.count} 筆交易</p>
                     </div>
                     <div class="text-right">
                         <p class="text-xs font-black ${pnlClass}">均 $${avgPnl.toLocaleString()}</p>
-                        <p class="text-[10px] font-bold text-slate-400">勝率 ${winRate}%</p>
+                        <p class="text-[0.625rem] font-bold text-slate-400">勝率 ${winRate}%</p>
                     </div>
                 </div>`;
             }
@@ -2204,7 +2213,7 @@
                 <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20">
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-black text-red-600 dark:text-red-400">${tag}</span>
-                        <span class="text-[10px] font-bold text-slate-400">x${v.count}</span>
+                        <span class="text-[0.625rem] font-bold text-slate-400">x${v.count}</span>
                     </div>
                     <p class="text-xs font-black ${pnlClass}">$${Math.round(v.pnl).toLocaleString()}</p>
                 </div>`;
@@ -2220,14 +2229,14 @@
             const personasList = ['freelancer', 'office', 'boss'];
             
             let html = `<div class="bg-transparent"></div>`;
-            winds.forEach(w => html += `<div class="text-[10px] text-center font-black text-slate-400 uppercase tracking-widest py-2">${w}</div>`);
+            winds.forEach(w => html += `<div class="text-[0.625rem] text-center font-black text-slate-400 uppercase tracking-widest py-2">${w}</div>`);
             
             personasList.forEach(p => {
                 html += `<div class="flex flex-col items-center justify-center gap-1.5">
                     <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs" style="background-color: ${personas[p].color}">
                         <i data-lucide="${getPersonaIcon(p)}" class="w-4 h-4"></i>
                     </div>
-                    <span class="text-[10px] font-black text-slate-600 dark:text-slate-300">${personas[p].title}</span>
+                    <span class="text-[0.625rem] font-black text-slate-600 dark:text-slate-300">${personas[p].title}</span>
                 </div>`;
                 
                 winds.forEach(w => {
@@ -2245,8 +2254,8 @@
                     const bgClass = cellPnl > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300' : (cellPnl < 0 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300');
                     
                     html += `
-                        <div class="matrix-cell ${bgClass} rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
-                            <span class="text-[10px] font-bold">${winRate}%</span>
+                        <div class="matrix-cell ${bgClass} rounded-xl p-2 flex flex-col items-center justify-center min-h-[3.75rem]">
+                            <span class="text-[0.625rem] font-bold">${winRate}%</span>
                             <span class="text-xs font-black">${formatLargeNumber(cellPnl)}</span>
                         </div>
                     `;
@@ -2524,7 +2533,7 @@
             // 重新整理按鈕
             const refreshHeader = `
                 <div class="col-span-full flex justify-end mb-2">
-                    <button onclick="updateStockData()" class="flex items-center gap-1 text-[10px] font-bold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-slate-500">
+                    <button onclick="updateStockData()" class="flex items-center gap-1 text-[0.625rem] font-bold bg-white dark:bg-slate-900 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-slate-500">
                         <i data-lucide="refresh-cw" class="w-3 h-3" id="refresh-btn-icon"></i>
                         <span>更新報價</span>
                     </button>
@@ -2572,8 +2581,8 @@
                                     <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
                                 </div>
                                 <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm shrink-0" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
-                                    <span class="text-[10px] text-slate-400 font-bold truncate">${entryDateDisplay}</span>
+                                    <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white shadow-sm shrink-0" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                    <span class="text-[0.625rem] text-slate-400 font-bold truncate">${entryDateDisplay}</span>
                                 </div>
                             </div>
                         </div>
@@ -2581,7 +2590,7 @@
                         <div class="flex items-center gap-4 shrink-0">
                             <div class="text-right">
                                 <p class="text-base font-black ${pnlClass}">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
-                                <p class="text-[10px] font-bold ${pnlClass}">${roi}%</p>
+                                <p class="text-[0.625rem] font-bold ${pnlClass}">${roi}%</p>
                             </div>
                             
                             <div class="flex items-center gap-1 pl-3 border-l border-slate-100 dark:border-slate-800 ml-1">
@@ -2599,8 +2608,8 @@
                         <div class="flex justify-between items-start relative z-10 mb-2">
                             <div class="flex flex-col gap-1">
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
+                                    <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                    <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
                                 </div>
 
                                 <div class="flex items-baseline gap-1.5">
@@ -2611,7 +2620,7 @@
 
                                 <div class="flex items-center gap-1 mt-0.5">
                                     <i data-lucide="clock" class="w-3 h-3 text-slate-300"></i>
-                                    <p class="text-[10px] font-bold text-slate-400">${entryDateDisplay} (${daysHeld}天)</p>
+                                    <p class="text-[0.625rem] font-bold text-slate-400">${entryDateDisplay} (${daysHeld}天)</p>
                                 </div>
                             </div>
 
@@ -2623,12 +2632,12 @@
 
                         <div class="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-3 relative z-10">
                             <div class="text-left">
-                                <p class="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
+                                <p class="text-[0.625rem] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
                                 <p class="text-xs font-black text-slate-600 dark:text-slate-400">$${t.averagePrice.toFixed(1)} <span class="text-slate-300">|</span> ${t.totalQuantity}股</p>
                             </div>
                             <div class="text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
+                                    <p class="text-[0.5625rem] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
                                     ${isLive ? '<span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>' : ''}
                                 </div>
                                 <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 $${livePrice}</p>
@@ -2636,8 +2645,8 @@
                         </div>
 
                         <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
-                            <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
-                            <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
+                            <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[0.625rem] font-black">加碼</span></button>
+                            <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[0.625rem] font-black">平倉</span></button>
 
                             <button onclick="requestDelete('${t.id}')" class="bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400 px-3 py-2.5 rounded-xl flex items-center justify-center transition-colors border border-transparent hover:border-red-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
@@ -2722,8 +2731,8 @@
                                     <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title.substring(0,2)}</span>
+                                    <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
+                                    <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title.substring(0,2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -2731,7 +2740,7 @@
                         <div class="flex items-center gap-4">
                             <div class="text-right">
                                 <p class="text-base font-black ${pnlClass}">${sign}$${formatLargeNumber(totalPnL)}</p>
-                                <p class="text-[10px] font-bold text-slate-400">(${roi}%)</p>
+                                <p class="text-[0.625rem] font-bold text-slate-400">(${roi}%)</p>
                             </div>
                             <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -2744,8 +2753,8 @@
                         
                         <div class="flex flex-col gap-1.5">
                             <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
-                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
+                                <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
                             </div>
 
                             <div class="flex items-baseline gap-1.5">
@@ -2753,7 +2762,7 @@
                                 <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
                             </div>
 
-                            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                            <div class="flex items-center gap-2 text-[0.625rem] text-slate-400 font-bold">
                                 <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
                                 <span>費 $${totalFees.toLocaleString()}</span>
                             </div>
@@ -2765,7 +2774,7 @@
                                     ${sign}$${formatLargeNumber(totalPnL)}
                                     <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
                                 </p>
-                                <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
+                                <p class="text-[0.625rem] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
                             </div>
 
                             <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
@@ -2864,7 +2873,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             if(unPctEl) {
                 let unRoi = tOpenCost > 0 ? ((tUnrealized / tOpenCost) * 100).toFixed(1) : 0.0;
                 unPctEl.textContent = `${unRoi >= 0 ? '+' : ''}${unRoi}%`;
-                unPctEl.className = `text-[10px] font-bold ${unRoi >= 0 ? 'text-red-400' : 'text-green-500'}`;
+                unPctEl.className = `text-[0.625rem] font-bold ${unRoi >= 0 ? 'text-red-400' : 'text-green-500'}`;
             }
 
             // 更新彈窗數據 (把算好的費用填進去)
@@ -2885,7 +2894,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 </div>
                 <div>
                     <h3 class="text-lg font-black">損益分析</h3>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">P&L Breakdown</p>
+                    <p class="text-[0.625rem] text-slate-400 font-bold uppercase tracking-wider">P&L Breakdown</p>
                 </div>
             </div>
             <button onclick="closeStatsModal()" class="text-slate-400 bg-slate-50 dark:bg-slate-800 p-2 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -2897,11 +2906,11 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-amber-50 dark:bg-amber-900/10 p-3 rounded-2xl border border-amber-100 dark:border-amber-900/30">
-                    <div class="flex items-center gap-2 mb-1"><i data-lucide="coins" class="w-3 h-3 text-amber-500"></i><p class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">總手續費</p></div>
+                    <div class="flex items-center gap-2 mb-1"><i data-lucide="coins" class="w-3 h-3 text-amber-500"></i><p class="text-[0.625rem] font-black text-amber-600 dark:text-amber-400 uppercase">總手續費</p></div>
                     <p id="modal-total-fee" class="text-lg font-black text-amber-700 dark:text-amber-500">--</p>
                 </div>
                 <div class="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30">
-                    <div class="flex items-center gap-2 mb-1"><i data-lucide="landmark" class="w-3 h-3 text-blue-500"></i><p class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase">總證交稅</p></div>
+                    <div class="flex items-center gap-2 mb-1"><i data-lucide="landmark" class="w-3 h-3 text-blue-500"></i><p class="text-[0.625rem] font-black text-blue-600 dark:text-blue-400 uppercase">總證交稅</p></div>
                     <p id="modal-total-tax" class="text-lg font-black text-blue-700 dark:text-blue-500">--</p>
                 </div>
             </div>
