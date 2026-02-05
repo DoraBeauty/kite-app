@@ -109,6 +109,11 @@
                                 <button onclick="handleLogout()" class="w-full px-5 py-4 text-left text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"><i data-lucide="log-out" class="w-4 h-4"></i> 登出帳號</button>
                             </div>
                         </div>
+                        <div>
+                            <button onclick="toggleViewMode()" id="view-mode-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
+                                <i data-lucide="layout-grid" class="w-5 h-5 text-slate-400"></i>
+                            </button>
+                        </div>
                         <div class="relative">
                             <button onclick="toggleThemeMenu()" id="theme-toggle-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
                                 <i data-lucide="sun" id="theme-icon-light" class="w-5 h-5 text-amber-500 hidden"></i><i data-lucide="moon" id="theme-icon-dark" class="w-5 h-5 text-indigo-400 hidden"></i><i data-lucide="monitor" id="theme-icon-auto" class="w-5 h-5 text-slate-400 hidden"></i>
@@ -284,9 +289,26 @@
             </div>
         </div>
 
-        <div id="page-portfolio" class="hidden space-y-5 animate-in"><div id="portfolio-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div></div>
+        <div id="page-portfolio" class="hidden space-y-5 animate-in">
+            <div class="relative px-1">
+                <input type="text" id="portfolio-search" placeholder="搜尋庫存代號或名稱..." class="w-full bg-slate-100 dark:bg-slate-900 border-0 rounded-2xl p-3.5 pl-11 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-shadow" oninput="renderPortfolio()">
+                <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4 top-3.5"></i>
+            </div>
+            <div id="portfolio-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20"></div>
+        </div>
         
-        <div id="page-history" class="hidden space-y-5 animate-in"><div id="history-list" class="space-y-4 pb-20"></div></div>
+        <div id="page-history" class="hidden space-y-5 animate-in">
+            <div class="flex gap-3 px-1">
+                <div class="relative flex-1">
+                    <input type="text" id="history-search" placeholder="搜尋歷史代號..." class="w-full bg-slate-100 dark:bg-slate-900 border-0 rounded-2xl p-3.5 pl-11 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-shadow" oninput="renderHistory()">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4 top-3.5"></i>
+                </div>
+                <button onclick="showFilterModal()" class="bg-slate-100 dark:bg-slate-900 w-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors btn-press">
+                    <i data-lucide="filter" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="history-list" class="space-y-4 pb-20"></div>
+        </div>
         
         <div id="page-strategy" class="hidden space-y-6 animate-in pb-20">
             <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
@@ -422,7 +444,16 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出價格</label><input type="number" inputmode="decimal" id="sellPrice" step="0.01" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
-                    <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出股數</label><input type="number" inputmode="numeric" id="sellQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()"></div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出股數</label>
+                            <div class="flex gap-1 mb-1">
+                                <button onclick="setSellQty(0.5)" class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">1/2</button>
+                                <button onclick="setSellQty(1)" class="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-[10px] font-bold text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">ALL</button>
+                            </div>
+                        </div>
+                        <input type="number" inputmode="numeric" id="sellQty" step="1" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base" oninput="updateSellEstimate()">
+                    </div>
                 </div>
                 <div id="sell-estimate" class="hidden bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 text-center"><p class="text-[9px] text-slate-400 uppercase font-bold mb-1">預估淨損益</p><p class="text-base font-black" id="sell-estimate-val">--</p></div>
                 <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">賣出日期</label><input type="date" id="sellDate" class="w-full bg-slate-100 dark:bg-slate-800 border-0 rounded-2xl p-3.5 focus:ring-2 focus:ring-red-500 font-black text-base appearance-none"></div>
@@ -576,6 +607,9 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 pointer-events-none w-full max-w-sm px-4"></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -594,6 +628,52 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+
+        // Toast Notification System
+        window.showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            if (!container) return; // Safety check
+
+            const toast = document.createElement('div');
+
+            // Icon mapping & Styles
+            let iconName = 'info';
+            let bgClass = 'bg-slate-900 dark:bg-slate-700 text-white shadow-lg shadow-slate-500/20 dark:shadow-none';
+
+            if (type === 'success') {
+                iconName = 'check-circle';
+                bgClass = 'bg-green-500 text-white shadow-lg shadow-green-500/30';
+            } else if (type === 'error') {
+                iconName = 'alert-octagon';
+                bgClass = 'bg-red-500 text-white shadow-lg shadow-red-500/30';
+            } else if (type === 'warning') {
+                iconName = 'alert-triangle';
+                bgClass = 'bg-amber-500 text-white shadow-lg shadow-amber-500/30';
+            }
+
+            toast.className = `flex items-center gap-3 px-5 py-3.5 rounded-2xl backdrop-blur-md transform transition-all duration-500 translate-y-[-50px] opacity-0 pointer-events-auto min-w-[280px] max-w-full font-sans ${bgClass}`;
+            toast.style.willChange = 'transform, opacity';
+            toast.innerHTML = `
+                <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
+                <span class="text-sm font-black tracking-wide leading-tight">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-50px]', 'opacity-0');
+            });
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-20px]', 'scale-95');
+                setTimeout(() => {
+                    if(toast.parentNode) container.removeChild(toast);
+                }, 500);
+            }, 3000);
+        };
 
         let currentUser = null;
         let trades = [];
@@ -741,9 +821,9 @@
                             visibilityHandler = null;
                         }
                         // 強制登出當前設備
-                        alert('偵測到您已在其他設備登入，此設備將自動登出。');
+                        window.showToast('偵測到您已在其他設備登入，此設備將自動登出。', 'warning');
                         await signOut(auth);
-                        location.reload();
+                        setTimeout(() => location.reload(), 2000);
                     }
                 }
             }, (error) => {
@@ -802,6 +882,36 @@
 
         window.closeSettingsModal = () => document.getElementById('settingsModal').classList.add('hidden');
 
+        // View Mode Logic
+        window.viewMode = localStorage.getItem('kite_view_mode');
+        if (!window.viewMode) {
+            window.viewMode = window.innerWidth >= 768 ? 'list' : 'card';
+        }
+
+        window.toggleViewMode = () => {
+            window.viewMode = window.viewMode === 'card' ? 'list' : 'card';
+            localStorage.setItem('kite_view_mode', window.viewMode);
+            updateViewModeIcon();
+
+            // Re-render active tab content if needed
+            if(!document.getElementById('page-portfolio').classList.contains('hidden')) renderPortfolio();
+            if(!document.getElementById('page-history').classList.contains('hidden')) renderHistory();
+        };
+
+        window.updateViewModeIcon = () => {
+            const btn = document.getElementById('view-mode-btn');
+            if(!btn) return;
+            if (window.viewMode === 'card') {
+                btn.innerHTML = `<i data-lucide="list" class="w-5 h-5 text-slate-400"></i>`;
+            } else {
+                btn.innerHTML = `<i data-lucide="layout-grid" class="w-5 h-5 text-slate-400"></i>`;
+            }
+            lucide.createIcons();
+        };
+
+        // Init icon
+        setTimeout(() => window.updateViewModeIcon(), 0);
+
         window.saveSettings = () => {
             const discount = parseFloat(document.getElementById('setting-discount').value) || 1.7;
             const minFee = parseInt(document.getElementById('setting-min-fee').value) || 1;
@@ -811,7 +921,7 @@
             renderHistory();
             updateGlobalStats(); 
             renderStrategyPage();
-            alert('費率已更新！所有損益已重新計算。');
+            window.showToast('費率已更新！所有損益已重新計算。', 'success');
         };
 
         window.calculateCost = (price, qty, type) => {
@@ -857,7 +967,7 @@
                 }
             } catch (error) {
                 console.error("Login Failed:", error);
-                alert("登入失敗: " + error.message);
+                window.showToast("登入失敗: " + error.message, 'error');
                 btn.innerHTML = originalText;
                 lucide.createIcons();
             }
@@ -973,7 +1083,7 @@
         }
 
         window.handleTradeSubmit = async () => {
-            if(!currentUser) return alert("請先登入");
+            if(!currentUser) { window.showToast("請先登入", 'warning'); return; }
 
             // --- Checklist Validation ---
             const checkboxes = document.querySelectorAll('.checklist-item');
@@ -1024,7 +1134,7 @@
                 document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
                 switchTab('portfolio');
             } catch(e) {
-                alert("儲存失敗");
+                window.showToast("儲存失敗", 'error');
                 console.error(e);
             } finally {
                 btn.innerHTML = oldText;
@@ -1351,6 +1461,16 @@
 
         window.closeModal = () => { document.getElementById('sellModal').classList.add('hidden'); window.tradeToSellId=null; };
         
+        window.setSellQty = (fraction) => {
+            if (!window.tradeToSellId) return;
+            const t = trades.find(item => item.id === window.tradeToSellId);
+            if (!t) return;
+
+            const qty = Math.floor(t.totalQuantity * fraction);
+            document.getElementById('sellQty').value = qty;
+            updateSellEstimate();
+        };
+
         window.addPosition = (id) => { window.tradeToAddId=id; document.getElementById('addPositionModal').classList.remove('hidden'); document.getElementById('addPosPrice').value=''; document.getElementById('addPosQty').value=''; document.getElementById('addPosNote').value=''; document.getElementById('addPosDate').valueAsDate=new Date(); };
         window.closeAddPositionModal = () => { document.getElementById('addPositionModal').classList.add('hidden'); window.tradeToAddId=null; };
         
@@ -1481,13 +1601,13 @@
         };
 
         window.addCustomTag = async (tradeId) => {
-            if(!currentUser) return alert("請先登入");
+            if(!currentUser) { window.showToast("請先登入", 'warning'); return; }
             const input = document.getElementById('new-tag-input');
             const val = input.value.trim();
             if(!val) return;
 
             if(window.userMistakes.includes(val)) {
-                alert("此標記已存在");
+                window.showToast("此標記已存在", 'warning');
                 return;
             }
 
@@ -1503,7 +1623,7 @@
                 }, { merge: true });
             } catch(e) {
                 console.error("Save tag failed", e);
-                alert("儲存標記失敗");
+                window.showToast("儲存標記失敗", 'error');
             }
         };
 
@@ -1570,7 +1690,7 @@
                 window.toggleEditNote(tradeId, idx);
             } catch(e) {
                 console.error("Error updating note:", e);
-                alert("更新失敗");
+                window.showToast("更新失敗", 'error');
             }
         };
 
@@ -1777,12 +1897,12 @@
 
             } catch (e) {
                 console.error("Error in selectDate:", e);
-                alert("載入日期資料時發生錯誤，請重試。");
+                window.showToast("載入日期資料時發生錯誤，請重試。", 'error');
             }
         };
 
         window.setManualWind = async (label) => {
-            if(!currentUser) return alert("請先登入");
+            if(!currentUser) { window.showToast("請先登入", 'warning'); return; }
             const dateStr = window.selectedDate;
 
             // Define static data for manual entry
@@ -1848,13 +1968,13 @@
                     console.log("Manual wind saved:", label);
                 } catch(e) {
                     console.error("Failed to save manual wind", e);
-                    alert("儲存失敗");
+                    window.showToast("儲存失敗", 'error');
                 }
             }
         };
 
         window.saveDailyLog = async () => {
-            if(!currentUser) return alert("請先登入");
+            if(!currentUser) { window.showToast("請先登入", 'warning'); return; }
             const dateStr = window.selectedDate;
             const content = document.getElementById('journal-content').value;
 
@@ -1891,7 +2011,7 @@
                 }, 2000);
             } catch (e) {
                 console.error("Error saving log:", e);
-                alert("儲存失敗");
+                window.showToast("儲存失敗", 'error');
                 btn.innerHTML = originalText;
                 lucide.createIcons();
             }
@@ -2386,7 +2506,14 @@
         // Render Functions
         window.renderPortfolio = () => {
             const list = document.getElementById('portfolio-list'); 
-            const openTrades = trades.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt);
+            const searchEl = document.getElementById('portfolio-search');
+            const term = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+            const openTrades = trades.filter(t => {
+                if(t.status !== 'open') return false;
+                if(term && !t.symbolCode.toLowerCase().includes(term) && !t.symbolName.toLowerCase().includes(term)) return false;
+                return true;
+            }).sort((a, b) => b.createdAt - a.createdAt);
             
             // 取得當前時間
             const now = new Date();
@@ -2407,21 +2534,25 @@
                 return; 
             }
 
+            // Adjust layout based on viewMode
+            if (window.viewMode === 'list') {
+                list.className = 'flex flex-col gap-2 pb-20';
+            } else {
+                list.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 pb-20';
+            }
+
             const cardsHtml = openTrades.map(t => {
                 const hasImg = t.history.some(h => h.screenshot);
                 const imgIcon = hasImg ? `<i data-lucide="image" class="w-3.5 h-3.5 text-indigo-400"></i>` : '';
                 
                 const entryDateObj = new Date(t.entryDate);
                 const daysHeld = Math.floor((new Date() - entryDateObj) / (1000 * 60 * 60 * 24));
-                
-                // === 修改處：顯示完整年月日 (YYYY/MM/DD) ===
                 const entryDateDisplay = t.entryDate.replace(/-/g, '/'); 
                 
                 const livePrice = window.livePrices[t.symbolCode] || t.averagePrice;
                 const isLive = !!window.livePrices[t.symbolCode]; 
                 const marketValue = livePrice * t.totalQuantity;
                 const costValue = t.averagePrice * t.totalQuantity; 
-                // 扣除預估賣出成本 (手續費 + 交易稅)
                 const sellCost = window.calculateCost(livePrice, t.totalQuantity, 'sell');
                 const unPnl = marketValue - costValue - sellCost;
                 const roi = costValue > 0 ? ((unPnl / costValue) * 100).toFixed(2) : 0;
@@ -2429,56 +2560,87 @@
                 const pnlClass = unPnl >= 0 ? 'text-red-500' : 'text-green-500';
                 const bgClass = unPnl >= 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-green-50 dark:bg-green-900/10';
 
-                return `<div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 btn-press relative overflow-hidden" onclick="viewDetails('${t.id}')">
-                    
-                    <div class="absolute right-0 top-0 bottom-0 w-24 ${bgClass} opacity-50 blur-2xl pointer-events-none"></div>
+                if (window.viewMode === 'list') {
+                    // List View
+                    return `<div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between btn-press relative overflow-hidden" onclick="viewDetails('${t.id}')">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="flex flex-col min-w-0">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-sm font-black text-slate-800 dark:text-slate-100 truncate">${t.symbolName}</span>
+                                    <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm shrink-0" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                    <span class="text-[10px] text-slate-400 font-bold truncate">${entryDateDisplay}</span>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="flex justify-between items-start relative z-10 mb-2">
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
-                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
+                        <div class="flex items-center gap-4 shrink-0">
+                            <div class="text-right">
+                                <p class="text-base font-black ${pnlClass}">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
+                                <p class="text-[10px] font-bold ${pnlClass}">${roi}%</p>
                             </div>
                             
-                            <div class="flex items-baseline gap-1.5">
-                                <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">${t.symbolName}</h3>
-                                <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
-                                ${imgIcon}
-                            </div>
-
-                            <div class="flex items-center gap-1 mt-0.5">
-                                <i data-lucide="clock" class="w-3 h-3 text-slate-300"></i>
-                                <p class="text-[10px] font-bold text-slate-400">${entryDateDisplay} (${daysHeld}天)</p>
+                            <div class="flex items-center gap-1 pl-3 border-l border-slate-100 dark:border-slate-800 ml-1">
+                                <button onclick="event.stopPropagation(); addPosition('${t.id}')" class="p-2 text-slate-400 hover:text-indigo-500 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                <button onclick="event.stopPropagation(); openSellModal('${t.id}')" class="p-2 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><i data-lucide="log-out" class="w-4 h-4"></i></button>
                             </div>
                         </div>
+                     </div>`;
+                } else {
+                    // Card View
+                    return `<div class="bg-white dark:bg-slate-900 p-5 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 btn-press relative overflow-hidden" onclick="viewDetails('${t.id}')">
 
-                        <div class="text-right">
-                            <p class="text-2xl font-black ${pnlClass} tracking-tight">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
-                            <p class="text-xs font-bold ${pnlClass} mb-1">${roi}%</p>
-                        </div>
-                    </div>
+                        <div class="absolute right-0 top-0 bottom-0 w-24 ${bgClass} opacity-50 blur-2xl pointer-events-none"></div>
 
-                    <div class="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-3 relative z-10">
-                        <div class="text-left">
-                            <p class="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
-                            <p class="text-xs font-black text-slate-600 dark:text-slate-400">$${t.averagePrice.toFixed(1)} <span class="text-slate-300">|</span> ${t.totalQuantity}股</p>
-                        </div>
-                        <div class="text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
-                                ${isLive ? '<span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>' : ''}
+                        <div class="flex justify-between items-start relative z-10 mb-2">
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">${t.strategyName}</span>
+                                </div>
+
+                                <div class="flex items-baseline gap-1.5">
+                                    <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">${t.symbolName}</h3>
+                                    <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
+                                    ${imgIcon}
+                                </div>
+
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <i data-lucide="clock" class="w-3 h-3 text-slate-300"></i>
+                                    <p class="text-[10px] font-bold text-slate-400">${entryDateDisplay} (${daysHeld}天)</p>
+                                </div>
                             </div>
-                            <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 $${livePrice}</p>
-                        </div>
-                    </div>
 
-                    <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
-                        <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
-                        <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
-                        
-                        <button onclick="requestDelete('${t.id}')" class="bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400 px-3 py-2.5 rounded-xl flex items-center justify-center transition-colors border border-transparent hover:border-red-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>`;
+                            <div class="text-right">
+                                <p class="text-2xl font-black ${pnlClass} tracking-tight">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
+                                <p class="text-xs font-bold ${pnlClass} mb-1">${roi}%</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-3 relative z-10">
+                            <div class="text-left">
+                                <p class="text-[10px] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
+                                <p class="text-xs font-black text-slate-600 dark:text-slate-400">$${t.averagePrice.toFixed(1)} <span class="text-slate-300">|</span> ${t.totalQuantity}股</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <p class="text-[9px] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
+                                    ${isLive ? '<span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>' : ''}
+                                </div>
+                                <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 $${livePrice}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mt-3 pt-2" onclick="event.stopPropagation()">
+                            <button onclick="addPosition('${t.id}')" class="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="plus" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">加碼</span></button>
+                            <button onclick="openSellModal('${t.id}')" class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 px-3 py-2.5 rounded-xl flex items-center justify-center gap-1 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span class="text-[10px] font-black">平倉</span></button>
+
+                            <button onclick="requestDelete('${t.id}')" class="bg-red-50 hover:bg-red-100 text-red-500 dark:bg-red-900/20 dark:text-red-400 px-3 py-2.5 rounded-xl flex items-center justify-center transition-colors border border-transparent hover:border-red-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>`;
+                }
             }).join('');
             
             list.innerHTML = refreshHeader + cardsHtml;
@@ -2487,8 +2649,19 @@
         window.renderHistory = () => {
             const list = document.getElementById('history-list');
             const stats = document.getElementById('history-stats');
+            const searchEl = document.getElementById('history-search');
+            const term = searchEl ? searchEl.value.trim().toLowerCase() : '';
             
-            const closedTrades = trades.filter(t => t.status === 'closed').sort((a, b) => {
+            const closedTrades = trades.filter(t => {
+                if(t.status !== 'closed') return false;
+                if(term && !t.symbolCode.toLowerCase().includes(term) && !t.symbolName.toLowerCase().includes(term)) return false;
+
+                // Optional: Apply Date Filter to list as well?
+                // Currently filter only affects Stats. Let's keep it consistent or follow user request.
+                // User asked for "Search".
+
+                return true;
+            }).sort((a, b) => {
                 const getLastSellTime = (trade) => {
                     const lastSell = [...trade.history].reverse().find(h => h.type === 'sell');
                     if (lastSell && lastSell.timestamp) return lastSell.timestamp;
@@ -2502,6 +2675,12 @@
                 list.innerHTML = `<div class="text-center py-12 text-slate-300 font-bold text-xs border-2 border-dashed rounded-3xl border-slate-100 dark:border-slate-800">尚無歷史交易</div>`;
                 if (stats) stats.innerHTML = '';
                 return;
+            }
+
+            if (window.viewMode === 'list') {
+                list.className = 'flex flex-col gap-2 pb-20';
+            } else {
+                list.className = 'space-y-4 pb-20';
             }
 
             list.innerHTML = closedTrades.map(t => {
@@ -2526,47 +2705,74 @@
                 const start = new Date(t.entryDate);
                 const end = new Date(exitDateStr);
                 const daysHeld = Math.max(1, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
-                
-                // === 修改處：顯示完整年月日 (YYYY/MM/DD) ===
                 const dateDisplay = t.entryDate.replace(/-/g, '/');
 
                 const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
                 const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
                 
-                return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative" onclick="viewDetails('${t.id}')">
-                    
-                    <div class="flex flex-col gap-1.5">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
-                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                if (window.viewMode === 'list') {
+                    // List View
+                    return `<div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} flex items-center justify-between btn-press" onclick="viewDetails('${t.id}')">
+                        <div class="flex items-center gap-3">
+                            <div class="flex flex-col">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-sm font-black text-slate-800 dark:text-slate-100">${t.symbolName}</span>
+                                    <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title.substring(0,2)}</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="flex items-baseline gap-1.5">
-                            <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
-                            <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <p class="text-base font-black ${pnlClass}">${sign}$${formatLargeNumber(totalPnL)}</p>
+                                <p class="text-[10px] font-bold text-slate-400">(${roi}%)</p>
+                            </div>
+                            <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
+                    </div>`;
+                } else {
+                    // Card View
+                    return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative" onclick="viewDetails('${t.id}')">
                         
-                        <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
-                            <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
-                            <span>費 $${totalFees.toLocaleString()}</span>
-                        </div>
-                    </div>
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
+                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                            </div>
 
-                    <div class="flex items-center gap-4">
-                        <div class="text-right">
-                            <p class="text-lg xs:text-xl font-black ${pnlClass}">
-                                ${sign}$${formatLargeNumber(totalPnL)}
-                                <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
-                            </p>
-                            <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
-                        </div>
-                        
-                        <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
+                            <div class="flex items-baseline gap-1.5">
+                                <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
+                                <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                            </div>
 
-                </div>`;
+                            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                                <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
+                                <span>費 $${totalFees.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <p class="text-lg xs:text-xl font-black ${pnlClass}">
+                                    ${sign}$${formatLargeNumber(totalPnL)}
+                                    <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
+                                </p>
+                                <p class="text-[10px] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
+                            </div>
+
+                            <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                    </div>`;
+                }
             }).join('');
             
             lucide.createIcons();
