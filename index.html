@@ -1631,6 +1631,15 @@
                     </div>
 
                     <div id="note-edit-${idx}" class="hidden mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
+                        <div class="mb-2">
+                            <label class="text-[0.625rem] font-bold text-slate-400 block mb-1">風度</label>
+                            <select id="wind-input-${idx}" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-indigo-500">
+                                <option value="強風" ${h.wind === '強風' ? 'selected' : ''}>強風</option>
+                                <option value="亂流" ${h.wind === '亂流' ? 'selected' : ''}>亂流</option>
+                                <option value="陣風" ${h.wind === '陣風' ? 'selected' : ''}>陣風</option>
+                                <option value="無風" ${h.wind === '無風' ? 'selected' : ''}>無風</option>
+                            </select>
+                        </div>
                         <textarea id="note-input-${idx}" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 mb-2">${h.note || ''}</textarea>
                         <div class="flex justify-end gap-2">
                             <button onclick="toggleEditNote('${t.id}', ${idx})" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
@@ -1752,28 +1761,38 @@
             if(!t) return;
 
             const newContent = document.getElementById(`note-input-${idx}`).value;
+            const newWind = document.getElementById(`wind-input-${idx}`).value;
+
             // Directly modify the item at original index
             const newHistory = [...t.history];
             if(newHistory[idx]) {
-                newHistory[idx] = { ...newHistory[idx], note: newContent };
+                newHistory[idx] = { ...newHistory[idx], note: newContent, wind: newWind };
             } else {
                 return; // Index out of bounds?
             }
 
+            // Sync top-level fields
+            let updates = { history: newHistory };
+            if (idx === 0) updates.entryWind = newWind;
+            if (idx === newHistory.length - 1 && t.status === 'closed' && newHistory[idx].type === 'sell') {
+                updates.exitWind = newWind;
+            }
+
             try {
-                await updateDoc(doc(db, "users", currentUser.uid, "trades", tradeId), { history: newHistory });
+                await updateDoc(doc(db, "users", currentUser.uid, "trades", tradeId), updates);
 
-                // Simple DOM update:
-                const viewEl = document.getElementById(`note-view-${idx}`);
-                const pEl = viewEl.querySelector('p');
-                if (newContent) {
-                    pEl.textContent = newContent;
-                } else {
-                    pEl.innerHTML = '<span class="text-slate-400 italic font-normal text-xs">無備註</span>';
-                }
-                document.getElementById(`note-input-${idx}`).value = newContent;
+                // Optimistic update
+                t.history = newHistory;
+                if (updates.entryWind) t.entryWind = updates.entryWind;
+                if (updates.exitWind) t.exitWind = updates.exitWind;
 
-                window.toggleEditNote(tradeId, idx);
+                // Refresh UI
+                viewDetails(tradeId);
+                if(!document.getElementById('page-portfolio').classList.contains('hidden')) renderPortfolio();
+                if(!document.getElementById('page-history').classList.contains('hidden')) renderHistory();
+                if(!document.getElementById('page-strategy').classList.contains('hidden')) renderStrategyPage();
+
+                window.showToast("更新成功", 'success');
             } catch(e) {
                 console.error("Error updating note:", e);
                 window.showToast("更新失敗", 'error');
