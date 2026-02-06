@@ -1112,6 +1112,7 @@
             const q = query(collection(db, "users", userId, "trades"), orderBy("createdAt", "desc"));
             unsubscribe = onSnapshot(q, (snapshot) => {
                 trades = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.trades = trades;
                 renderPortfolio();
                 renderHistory();
                 updateGlobalStats();
@@ -1218,7 +1219,7 @@
              const t = trades.find(item => item.id === window.tradeToSellId);
              if (t && price && qty) {
                 const newQty = t.totalQuantity - qty;
-                const newHistory = [...t.history, { type: 'sell', date: document.getElementById('sellDate').value, price, quantity: qty, wind: document.getElementById('exitWindInput').value, note: document.getElementById('sellNote').value, timestamp: Date.now() }];
+                const newHistory = [...t.history, { type: 'sell', date: document.getElementById('sellDate').value, price, quantity: qty, wind: document.getElementById('exitWindInput').value, note: document.getElementById('sellNote').value, averagePrice: t.averagePrice, timestamp: Date.now() }];
                 const updateData = { totalQuantity: newQty, history: newHistory };
                 if (newQty <= 0) {
                     updateData.status = 'closed';
@@ -3013,8 +3014,9 @@
             const searchEl = document.getElementById('history-search');
             const term = searchEl ? searchEl.value.trim().toLowerCase() : '';
             
-            const closedTrades = trades.filter(t => {
-                if(t.status !== 'closed') return false;
+            const closedTrades = window.trades.filter(t => {
+                const hasSells = t.history && t.history.some(h => h.type === 'sell');
+                if (t.status !== 'closed' && !hasSells) return false;
                 if(term && !t.symbolCode.toLowerCase().includes(term) && !t.symbolName.toLowerCase().includes(term)) return false;
 
                 // Optional: Apply Date Filter to list as well?
@@ -3051,9 +3053,10 @@
 
                 t.history.forEach(h => {
                     if(h.type === 'sell') {
-                        totalPnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        const costBasis = h.averagePrice || t.averagePrice;
+                        totalPnL += window.calculateNetPnL(costBasis, h.price, h.quantity);
                         totalFees += window.calculateCost(h.price, h.quantity, 'sell');
-                        totalCost += (t.averagePrice * h.quantity);
+                        totalCost += (costBasis * h.quantity);
                     } else if(h.type === 'buy') {
                         totalFees += window.calculateCost(h.price, h.quantity, 'buy');
                     }
@@ -3070,6 +3073,7 @@
 
                 const pnlClass = totalPnL >= 0 ? 'text-red-500' : 'text-green-600';
                 const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
+                const statusBadge = t.status === 'open' ? '<span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 ml-2">持倉中</span>' : '';
                 
                 if (window.viewMode === 'list') {
                     // List View
@@ -3079,6 +3083,7 @@
                                 <div class="flex items-baseline gap-2">
                                     <span class="text-sm font-black text-slate-800 dark:text-slate-100">${t.symbolName}</span>
                                     <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                                    ${statusBadge}
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
@@ -3105,6 +3110,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
                                 <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                ${statusBadge}
                             </div>
 
                             <div class="flex items-baseline gap-1.5">
