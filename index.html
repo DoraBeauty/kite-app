@@ -1801,16 +1801,43 @@
             }
         };
 
+        // Holiday Data Logic
+        window.calendarCache = {};
+
+        window.fetchHolidays = async (year) => {
+            if (window.calendarCache[year]) return;
+            try {
+                const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+                if (!res.ok) throw new Error('Fetch failed');
+                const data = await res.json();
+
+                window.calendarCache[year] = {};
+                data.forEach(d => {
+                    if (d.date && d.date.length === 8) {
+                        const formatted = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
+                        window.calendarCache[year][formatted] = d;
+                    }
+                });
+            } catch (e) {
+                console.error("Failed to fetch holidays:", e);
+                window.calendarCache[year] = {};
+            }
+        };
+
         // Journal Logic
         window.renderJournalPage = () => {
             renderCalendar();
             selectDate(window.selectedDate);
         };
 
-        window.renderCalendar = () => {
+        window.renderCalendar = async () => {
             const container = document.getElementById('calendar-container');
             const year = window.currentYear;
             const month = window.currentMonth;
+
+            // Ensure holidays are loaded for current year
+            // Also load prev/next year if needed (edge cases), but current is usually sufficient
+            await window.fetchHolidays(year);
 
             // Calculate Heatmap Data
             const stats = window.calculateAdvancedStats(trades);
@@ -1848,6 +1875,15 @@
             // Days
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const currentDate = new Date(year, month, day);
+                const dayOfWeek = currentDate.getDay(); // 0=Sun, 6=Sat
+
+                // Holiday Logic
+                const holidayInfo = window.calendarCache[year] ? window.calendarCache[year][dateStr] : null;
+                const isHoliday = holidayInfo && holidayInfo.isHoliday;
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isMarketClosed = isWeekend || isHoliday;
+
                 const isSelected = dateStr === window.selectedDate;
                 const isToday = dateStr === window.getLocalISODate();
                 const hasLog = dailyLogs[dateStr] && dailyLogs[dateStr].content;
@@ -1866,6 +1902,12 @@
                 }
 
                 let bgClass = isSelected ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30' : (isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800');
+
+                // Apply Closed Market Style (if not selected/today and no PnL)
+                if (!isSelected && !isToday && isMarketClosed && pnl === 0) {
+                    bgClass = 'bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent';
+                    textClass = 'text-slate-400 dark:text-slate-500';
+                }
 
                 if (!isSelected && pnl !== 0) {
                     const opacity = maxDailyPnl > 0 ? Math.min(0.8, 0.15 + (Math.abs(pnl) / maxDailyPnl) * 0.6) : 0.2;
@@ -1889,8 +1931,16 @@
                      marketHtml = `<div class="mt-0.5 h-3"></div>`;
                 }
 
+                // Closed Badge (休)
+                let holidayBadge = '';
+                if (isMarketClosed) {
+                    const badgeColor = isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
+                    holidayBadge = `<div class="absolute top-1 right-1 px-1 rounded text-[0.5rem] font-bold leading-none ${badgeColor}">休</div>`;
+                }
+
                 html += `
                     <div onclick="selectDate('${dateStr}')" class="aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all btn-press relative ${bgClass} p-1" style="${bgStyle}">
+                        ${holidayBadge}
                         <span class="text-sm font-black leading-none ${textClass}">${day}</span>
                         ${marketHtml}
                         <div class="flex gap-0.5 mt-0.5">
