@@ -1810,38 +1810,75 @@
             if (window.calendarPromises[year]) return window.calendarPromises[year];
 
             const promise = (async () => {
+                let twseSuccess = false;
+
+                // 1. Try TWSE Official API first (includes Stock Market specific closures)
                 try {
-                    const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
-                    if (!res.ok) throw new Error('Fetch failed');
-                    const data = await res.json();
+                    const res = await fetch(`https://www.twse.com.tw/rwd/zh/holidaySchedule/holidaySchedule?response=json&year=${year}`);
+                    if (res.ok) {
+                        const json = await res.json();
+                        // TWSE API might return current year if requested year not found or param ignored
+                        // Verify queryYear matches requested year
+                        if (json.stat === 'ok' && json.queryYear == year && Array.isArray(json.data)) {
+                            window.calendarCache[year] = {};
+                            json.data.forEach(item => {
+                                // Item format: ["2026-02-12", "Description", ...]
+                                const date = item[0];
+                                const name = item[1];
 
-                    window.calendarCache[year] = {};
-                    data.forEach(d => {
-                        if (d.date && d.date.length === 8) {
-                            const formatted = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
-                            window.calendarCache[year][formatted] = d;
+                                // Filter out informational entries that are actually trading days
+                                if (name.includes('最後交易') || name.includes('開始交易')) return;
+
+                                window.calendarCache[year][date] = {
+                                    date: date.replace(/-/g, ''),
+                                    isHoliday: true,
+                                    description: name
+                                };
+                            });
+                            twseSuccess = true;
+                            console.log(`Loaded holidays for ${year} from TWSE`);
                         }
-                    });
+                    }
+                } catch (e) {
+                    console.warn(`Failed to fetch holidays from TWSE for ${year}, trying fallback...`, e);
+                }
 
-                    // --- Patch for 2026 Spring Festival Market Closure ---
-                    if (year === 2026) {
-                        const patchDates = ['2026-02-12', '2026-02-13'];
-                        patchDates.forEach(date => {
-                            if (window.calendarCache[year][date]) {
-                                window.calendarCache[year][date].isHoliday = true;
-                                window.calendarCache[year][date].description = (window.calendarCache[year][date].description || '') + ' (股市休市)';
-                            } else {
-                                window.calendarCache[year][date] = { date: date.replace(/-/g, ''), isHoliday: true, description: '股市休市', week: '' };
+                // 2. Fallback to Open Source Calendar if TWSE failed
+                if (!twseSuccess) {
+                    try {
+                        const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+                        if (!res.ok) throw new Error('Fetch failed');
+                        const data = await res.json();
+
+                        window.calendarCache[year] = {};
+                        data.forEach(d => {
+                            if (d.date && d.date.length === 8) {
+                                const formatted = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
+                                window.calendarCache[year][formatted] = d;
                             }
                         });
+                        console.log(`Loaded holidays for ${year} from Open Source`);
+
+                        // --- Patch for 2026 Spring Festival Market Closure (Fallback Only) ---
+                        if (year === 2026) {
+                            const patchDates = ['2026-02-12', '2026-02-13'];
+                            patchDates.forEach(date => {
+                                if (window.calendarCache[year][date]) {
+                                    window.calendarCache[year][date].isHoliday = true;
+                                    window.calendarCache[year][date].description = (window.calendarCache[year][date].description || '') + ' (股市休市)';
+                                } else {
+                                    window.calendarCache[year][date] = { date: date.replace(/-/g, ''), isHoliday: true, description: '股市休市', week: '' };
+                                }
+                            });
+                        }
+                        // -----------------------------------------------------
+                    } catch (e) {
+                        console.error("Failed to fetch holidays (all sources):", e);
+                        window.calendarCache[year] = {}; // Fallback to empty
                     }
-                    // -----------------------------------------------------
-                } catch (e) {
-                    console.error("Failed to fetch holidays:", e);
-                    window.calendarCache[year] = {}; // Fallback to empty to avoid repeated errors
-                } finally {
-                    delete window.calendarPromises[year];
                 }
+
+                delete window.calendarPromises[year];
             })();
 
             window.calendarPromises[year] = promise;
