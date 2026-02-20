@@ -1803,25 +1803,35 @@
 
         // Holiday Data Logic
         window.calendarCache = {};
+        window.calendarPromises = {};
 
         window.fetchHolidays = async (year) => {
             if (window.calendarCache[year]) return;
-            try {
-                const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
-                if (!res.ok) throw new Error('Fetch failed');
-                const data = await res.json();
+            if (window.calendarPromises[year]) return window.calendarPromises[year];
 
-                window.calendarCache[year] = {};
-                data.forEach(d => {
-                    if (d.date && d.date.length === 8) {
-                        const formatted = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
-                        window.calendarCache[year][formatted] = d;
-                    }
-                });
-            } catch (e) {
-                console.error("Failed to fetch holidays:", e);
-                window.calendarCache[year] = {};
-            }
+            const promise = (async () => {
+                try {
+                    const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+                    if (!res.ok) throw new Error('Fetch failed');
+                    const data = await res.json();
+
+                    window.calendarCache[year] = {};
+                    data.forEach(d => {
+                        if (d.date && d.date.length === 8) {
+                            const formatted = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
+                            window.calendarCache[year][formatted] = d;
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch holidays:", e);
+                    window.calendarCache[year] = {}; // Fallback to empty to avoid repeated errors
+                } finally {
+                    delete window.calendarPromises[year];
+                }
+            })();
+
+            window.calendarPromises[year] = promise;
+            return promise;
         };
 
         // Journal Logic
@@ -1905,7 +1915,7 @@
 
                 // Apply Closed Market Style (if not selected/today and no PnL)
                 if (!isSelected && !isToday && isMarketClosed && pnl === 0) {
-                    bgClass = 'bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent';
+                    bgClass = 'bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 border border-transparent';
                     textClass = 'text-slate-400 dark:text-slate-500';
                 }
 
@@ -1935,7 +1945,7 @@
                 let holidayBadge = '';
                 if (isMarketClosed) {
                     const badgeColor = isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
-                    holidayBadge = `<div class="absolute top-1 right-1 px-1 rounded text-[0.5rem] font-bold leading-none ${badgeColor}">休</div>`;
+                    holidayBadge = `<div class="absolute top-0 right-0 p-1"><div class="px-1 rounded text-[0.5rem] font-bold leading-none ${badgeColor} scale-90">休</div></div>`;
                 }
 
                 html += `
