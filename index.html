@@ -1822,6 +1822,20 @@
                             window.calendarCache[year][formatted] = d;
                         }
                     });
+
+                    // --- Patch for 2026 Spring Festival Market Closure ---
+                    if (year === 2026) {
+                        const patchDates = ['2026-02-12', '2026-02-13'];
+                        patchDates.forEach(date => {
+                            if (window.calendarCache[year][date]) {
+                                window.calendarCache[year][date].isHoliday = true;
+                                window.calendarCache[year][date].description = (window.calendarCache[year][date].description || '') + ' (股市休市)';
+                            } else {
+                                window.calendarCache[year][date] = { date: date.replace(/-/g, ''), isHoliday: true, description: '股市休市', week: '' };
+                            }
+                        });
+                    }
+                    // -----------------------------------------------------
                 } catch (e) {
                     console.error("Failed to fetch holidays:", e);
                     window.calendarCache[year] = {}; // Fallback to empty to avoid repeated errors
