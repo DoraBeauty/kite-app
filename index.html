@@ -844,14 +844,20 @@
 
         // 更新用戶會話信息
         async function updateUserSession(userId) {
-            const deviceId = getDeviceId();
-            const sessionRef = doc(db, "users", userId, "session", "current");
-            await setDoc(sessionRef, {
-                deviceId: deviceId,
-                lastActive: serverTimestamp(),
-                userAgent: navigator.userAgent,
-                platform: navigator.platform
-            }, { merge: true });
+            try {
+                const deviceId = getDeviceId();
+                const sessionRef = doc(db, "users", userId, "session", "current");
+                await setDoc(sessionRef, {
+                    deviceId: deviceId,
+                    lastActive: serverTimestamp(),
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform
+                }, { merge: true });
+                return true;
+            } catch (e) {
+                console.warn("Session update failed (likely permission issue), skipping session enforcement:", e);
+                return false;
+            }
         }
 
         // 監聽會話變化，如果其他設備登入則登出當前設備
@@ -1059,10 +1065,12 @@
                 currentUser = user;
                 
                 // 更新會話信息（確保會話是最新的）
-                await updateUserSession(user.uid);
+                const sessionUpdated = await updateUserSession(user.uid);
                 
-                // 開始監聽會話變化
-                monitorSession(user.uid);
+                // 開始監聽會話變化 (僅在成功更新會話後，避免權限不足導致無限登出)
+                if (sessionUpdated) {
+                    monitorSession(user.uid);
+                }
                 
                 document.getElementById('login-overlay').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('blur-login');
