@@ -1125,6 +1125,8 @@
                         console.error("Error init tags:", e);
                     }
                 }
+            }, (error) => {
+                console.warn("Failed to load settings/tags (permission error?):", error);
             });
         }
 
@@ -1137,6 +1139,9 @@
                 renderHistory();
                 updateGlobalStats();
                 if(!document.getElementById('page-journal').classList.contains('hidden')) renderCalendar();
+            }, (error) => {
+                console.error("Error subscribing to trades:", error);
+                window.showToast("讀取交易紀錄失敗 (權限不足?)", 'error');
             });
         }
 
@@ -1151,6 +1156,9 @@
                     renderCalendar();
                     selectDate(window.selectedDate);
                 }
+            }, (error) => {
+                console.error("Error subscribing to dailyLogs:", error);
+                window.showToast("讀取日誌失敗 (權限不足?)", 'error');
             });
         }
 
