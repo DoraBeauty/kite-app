@@ -1801,7 +1801,7 @@
                     <span class="text-[0.625rem] font-black px-2 py-0.5 rounded text-white shadow-sm align-middle" style="background-color: ${p.color}">${p.title}</span>
                     <span>${t.symbolCode} ${t.symbolName}</span>
                 </span>`;
-            document.getElementById('detail-subtitle').textContent = `${t.strategyName} | 均價 $${t.averagePrice.toFixed(2)} / 持倉 ${t.totalQuantity}股`;
+            document.getElementById('detail-subtitle').innerHTML = `${t.strategyName} | 均價 $${t.averagePrice.toFixed(2)} <button onclick="editCurrentAvgPrice('${t.id}')" class="text-slate-400 hover:text-indigo-500 align-middle"><i data-lucide="edit-2" class="w-3 h-3 inline"></i></button> / 持倉 ${t.totalQuantity}股`;
             const list = document.getElementById('detail-list'); 
             let currentCost = 0, currentQty = 0, avgPrice = 0; 
 
@@ -1812,6 +1812,9 @@
             const htmlItems = sortedHistory.map(h => { 
                 let pnlDisplay = ''; 
                 let feeDisplay = ''; 
+                // Use originalIndex for ID and handlers
+                const idx = h.originalIndex;
+
                 if(h.type === 'buy') { 
                     // 買入時，總成本包含手續費
                     const buyFee = window.calculateCost(h.price, h.quantity, 'buy');
@@ -1821,12 +1824,20 @@
                     avgPrice = currentCost / currentQty; 
                     feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費:</span> <span class="font-black">$${buyFee.toLocaleString()}</span></div>`;
                 } else if(h.type === 'sell') { 
-                    let cost = avgPrice * h.quantity; 
+                    // Prioritize snapshot cost (FIFO logic) or fallback to calculated
+                    const costBasis = h.averagePrice !== undefined ? h.averagePrice : avgPrice;
+                    let cost = costBasis * h.quantity;
                     const sellFee = window.calculateCost(h.price, h.quantity, 'sell');
-                    let realizedPnL = window.calculateNetPnL(avgPrice, h.price, h.quantity); 
+                    let realizedPnL = window.calculateNetPnL(costBasis, h.price, h.quantity);
                     let pct = cost > 0 ? ((realizedPnL / cost) * 100).toFixed(1) : 0; 
                     const pnlClass = realizedPnL >= 0 ? 'text-red-500' : 'text-green-600'; 
-                    feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費+稅:</span> <span class="font-black">$${sellFee.toLocaleString()}</span></div>`;
+                    feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400">
+                        <span class="font-bold">手續費+稅:</span> <span class="font-black">$${sellFee.toLocaleString()}</span>
+                        <div class="flex items-center gap-1 mt-1">
+                            <span class="font-bold text-slate-400">成本均價:</span> <span class="font-black">$${costBasis.toFixed(2)}</span>
+                            <button onclick="editHistoryCost('${t.id}', ${idx})" class="text-slate-300 hover:text-indigo-500"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>`;
                     pnlDisplay = `<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>淨損益: ${realizedPnL >= 0 ? '+' : ''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`; 
                     currentCost -= avgPrice * h.quantity; 
                     currentQty -= h.quantity; 
@@ -2026,6 +2037,77 @@
                 window.showToast("更新成功", 'success');
             } catch(e) {
                 console.error("Error updating note:", e);
+                window.showToast("更新失敗", 'error');
+            }
+        };
+
+        window.editCurrentAvgPrice = async (tradeId) => {
+            const t = window.trades.find(item => item.id === tradeId);
+            if(!t) return;
+
+            const newPriceStr = prompt("請輸入新的成本均價 (Average Price):", t.averagePrice);
+            if(newPriceStr === null) return;
+
+            const newPrice = parseFloat(newPriceStr);
+            if(isNaN(newPrice) || newPrice < 0) {
+                window.showToast("請輸入有效的數字", 'warning');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid, "trades", tradeId), {
+                    averagePrice: newPrice
+                });
+
+                // Optimistic Update
+                t.averagePrice = newPrice;
+
+                // Refresh UI
+                viewDetails(tradeId);
+                if(!document.getElementById('page-portfolio').classList.contains('hidden')) renderPortfolio();
+
+                window.showToast("成本均價已更新", 'success');
+            } catch(e) {
+                console.error("Update avg price failed:", e);
+                window.showToast("更新失敗", 'error');
+            }
+        };
+
+        window.editHistoryCost = async (tradeId, idx) => {
+            const t = window.trades.find(item => item.id === tradeId);
+            if(!t) return;
+
+            const h = t.history[idx];
+            // Default to trade avg if history doesn't have one specific
+            const currentCost = h.averagePrice !== undefined ? h.averagePrice : t.averagePrice;
+
+            const newCostStr = prompt("請輸入此筆交易的計算成本 (Cost Basis):", currentCost);
+            if(newCostStr === null) return;
+
+            const newCost = parseFloat(newCostStr);
+            if(isNaN(newCost) || newCost < 0) {
+                window.showToast("請輸入有效的數字", 'warning');
+                return;
+            }
+
+            const newHistory = [...t.history];
+            newHistory[idx] = { ...newHistory[idx], averagePrice: newCost };
+
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid, "trades", tradeId), {
+                    history: newHistory
+                });
+
+                // Optimistic Update
+                t.history = newHistory;
+
+                // Refresh UI
+                viewDetails(tradeId);
+                if(!document.getElementById('page-history').classList.contains('hidden')) renderHistory();
+
+                window.showToast("歷史成本已更新", 'success');
+            } catch(e) {
+                console.error("Update history cost failed:", e);
                 window.showToast("更新失敗", 'error');
             }
         };
