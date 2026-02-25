@@ -4,9 +4,17 @@ import time
 def verify(page):
     # Enable console logs
     page.on("console", lambda msg: print(f"PAGE LOG: {msg.text}"))
+    page.on("pageerror", lambda msg: print(f"PAGE ERROR: {msg}"))
 
     # Start server first in background (I'll assume I run it manually via tool)
     page.goto("http://localhost:8080/index.html")
+
+    # Wait for showToast to be defined (module load)
+    try:
+        page.wait_for_function("() => typeof window.showToast === 'function'", timeout=10000)
+    except:
+        print("Timeout waiting for showToast. Script might have crashed.")
+        return
 
     # Inject code to simulate the condition since we can't login easily
     # We will invoke showToast manually to verify the visual appearance matches expectations for a toast
