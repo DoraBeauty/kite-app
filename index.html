@@ -1225,7 +1225,7 @@
             if(!window.tradeToAddId) return;
             const price = parseFloat(document.getElementById('addPosPrice').value);
             const qty = parseInt(document.getElementById('addPosQty').value);
-            const t = trades.find(item => item.id === window.tradeToAddId);
+            const t = window.trades.find(item => item.id === window.tradeToAddId);
             if (t && price && qty) {
                 // 舊的總成本（如果 averagePrice 已含手續費，則直接使用；否則需要加上手續費）
                 // 為了安全起見，我們假設 averagePrice 可能已含手續費，所以直接用它計算舊總成本
@@ -1241,20 +1241,113 @@
             }
         };
 
+        // --- FIFO Logic Helper ---
+        window.calculateFIFOMetrics = (trade, sellQty) => {
+            // Sort history by time to simulate FIFO
+            // NOTE: We trust `history` order or timestamp
+            const history = [...trade.history].sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            // Queue of buy lots: { price, quantity, remainingQty }
+            let buyQueue = [];
+
+            history.forEach(h => {
+                if (h.type === 'buy') {
+                    // Cost includes fees
+                    const fee = window.calculateCost(h.price, h.quantity, 'buy');
+                    const costPerShare = ((h.price * h.quantity) + fee) / h.quantity;
+                    buyQueue.push({
+                        price: h.price,
+                        quantity: h.quantity,
+                        remainingQty: h.quantity,
+                        costPerShare: costPerShare
+                    });
+                } else if (h.type === 'sell') {
+                    // Deduct from queue for PAST sells to get to current state
+                    // We are calculating metrics for a NEW sell, so we must first replay past sells
+                    let qtyToDeduct = h.quantity;
+                    for (let lot of buyQueue) {
+                        if (qtyToDeduct <= 0) break;
+                        if (lot.remainingQty > 0) {
+                            const deduct = Math.min(lot.remainingQty, qtyToDeduct);
+                            lot.remainingQty -= deduct;
+                            qtyToDeduct -= deduct;
+                        }
+                    }
+                }
+            });
+
+            // Now simulate the NEW sell of `sellQty`
+            let remainingToSell = sellQty;
+            let totalSoldCost = 0; // Total cost basis of sold shares
+
+            for (let lot of buyQueue) {
+                if (remainingToSell <= 0) break;
+                if (lot.remainingQty > 0) {
+                    const deduct = Math.min(lot.remainingQty, remainingToSell);
+                    totalSoldCost += (deduct * lot.costPerShare);
+                    lot.remainingQty -= deduct;
+                    remainingToSell -= deduct;
+                }
+            }
+
+            // Calculate Remaining Holding Average Price
+            let holdingCost = 0;
+            let holdingQty = 0;
+            buyQueue.forEach(lot => {
+                if (lot.remainingQty > 0) {
+                    holdingCost += (lot.remainingQty * lot.costPerShare);
+                    holdingQty += lot.remainingQty;
+                }
+            });
+
+            const newAvgPrice = holdingQty > 0 ? (holdingCost / holdingQty) : 0;
+            const soldAvgCost = sellQty > 0 ? (totalSoldCost / sellQty) : 0;
+
+            return {
+                soldCostBasis: totalSoldCost,
+                soldAvgCost: soldAvgCost,
+                newHoldingAvgPrice: newAvgPrice,
+                remainingQty: holdingQty
+            };
+        };
+        // -------------------------
+
         window.confirmSellAction = async () => {
              if(!window.tradeToSellId) return;
              const price = parseFloat(document.getElementById('sellPrice').value);
              const qty = parseInt(document.getElementById('sellQty').value);
              const t = trades.find(item => item.id === window.tradeToSellId);
              if (t && price && qty) {
+                // Calculate FIFO Metrics
+                const fifo = window.calculateFIFOMetrics(t, qty);
                 const newQty = t.totalQuantity - qty;
-                const newHistory = [...t.history, { type: 'sell', date: document.getElementById('sellDate').value, price, quantity: qty, wind: document.getElementById('exitWindInput').value, note: document.getElementById('sellNote').value, averagePrice: t.averagePrice, timestamp: Date.now() }];
-                const updateData = { totalQuantity: newQty, history: newHistory };
+
+                // Construct new history item
+                // Store fifo.soldAvgCost as 'averagePrice' in history so realized P&L is accurate for this sell
+                const newHistoryItem = {
+                    type: 'sell',
+                    date: document.getElementById('sellDate').value,
+                    price,
+                    quantity: qty,
+                    wind: document.getElementById('exitWindInput').value,
+                    note: document.getElementById('sellNote').value,
+                    averagePrice: fifo.soldAvgCost, // Store FIFO Cost Basis
+                    timestamp: Date.now()
+                };
+
+                const newHistory = [...t.history, newHistoryItem];
+                const updateData = {
+                    totalQuantity: newQty,
+                    averagePrice: fifo.newHoldingAvgPrice, // Update to FIFO Remaining Avg
+                    history: newHistory
+                };
+
                 if (newQty <= 0) {
                     updateData.status = 'closed';
                     updateData.exitPrice = price;
                     updateData.exitDate = document.getElementById('sellDate').value;
                     updateData.exitWind = document.getElementById('exitWindInput').value;
+                    updateData.averagePrice = 0;
                 }
                 await updateDoc(doc(db, "users", currentUser.uid, "trades", t.id), updateData);
                 closeModal();
@@ -1500,7 +1593,7 @@
 
         window.openSellModal = (id) => { 
             window.tradeToSellId=id; 
-            const t=trades.find(item=>item.id===id); 
+            const t=window.trades.find(item=>item.id===id);
             document.getElementById('sellModal').classList.remove('hidden'); 
             document.getElementById('sellPrice').value=''; 
             document.getElementById('sellQty').value=t.totalQuantity; 
@@ -1526,7 +1619,7 @@
         
         window.updateSellEstimate = () => { 
             if(!window.tradeToSellId) return;
-            const t = trades.find(item => item.id === window.tradeToSellId);
+            const t = window.trades.find(item => item.id === window.tradeToSellId);
             const price = parseFloat(document.getElementById('sellPrice').value);
             const qty = parseInt(document.getElementById('sellQty').value);
             const el = document.getElementById('sell-estimate');
@@ -1557,7 +1650,7 @@
         
         window.setSellQty = (fraction) => {
             if (!window.tradeToSellId) return;
-            const t = trades.find(item => item.id === window.tradeToSellId);
+            const t = window.trades.find(item => item.id === window.tradeToSellId);
             if (!t) return;
 
             const qty = Math.floor(t.totalQuantity * fraction);
@@ -1580,7 +1673,7 @@
         window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.add('hidden'); window.tradeToDeleteId=null; };
         
         window.viewDetails = (id) => { 
-            const t = trades.find(item => item.id === id); 
+            const t = window.trades.find(item => item.id === id);
             if(!t) return; 
             const p = personas[t.persona];
             document.getElementById('detail-title').innerHTML = `
@@ -1741,7 +1834,7 @@
         };
 
         window.toggleMistake = async (tradeId, tag) => {
-            const t = trades.find(i => i.id === tradeId);
+            const t = window.trades.find(i => i.id === tradeId);
             if (!t) return;
             let tags = t.mistakeTags || [];
             if (tags.includes(tag)) {
@@ -1755,7 +1848,7 @@
         };
 
         window.setScore = async (tradeId, score) => {
-            const t = trades.find(i => i.id === tradeId);
+            const t = window.trades.find(i => i.id === tradeId);
             if (!t) return;
             if (t.executionScore === score) score = 0; // Toggle off if same
             t.executionScore = score; // Optimistic
@@ -1775,7 +1868,7 @@
         };
 
         window.saveHistoryNote = async (tradeId, idx) => {
-            const t = trades.find(item => item.id === tradeId);
+            const t = window.trades.find(item => item.id === tradeId);
             if(!t) return;
 
             const newContent = document.getElementById(`note-input-${idx}`).value;
