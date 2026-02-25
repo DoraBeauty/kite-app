@@ -1084,6 +1084,13 @@
                 subscribeToTags(user.uid);
                 // 🚀 步驟 4：登入成功，開始抓股價！
                 window.updateStockData();
+
+                // Check if FIFO migration is needed
+                if (!localStorage.getItem('fifo_migrated_v1')) {
+                    setTimeout(() => {
+                        window.showToast("系統更新：請點擊選單中的「資料修正 (FIFO)」以校正歷史均價", 'info');
+                    }, 3000);
+                }
             } else {
                 // 清理會話監聽、定時器和事件監聽器
                 if (unsubscribeSession) {
@@ -1495,6 +1502,7 @@
             if (updateCount > 0) {
                 try {
                     await batch.commit();
+                    localStorage.setItem('fifo_migrated_v1', 'true');
                     window.showToast(`成功修正 ${updateCount} 筆交易資料`, 'success');
                     console.log("Migration Log:", log);
                 } catch (e) {
@@ -1502,7 +1510,8 @@
                     window.showToast("資料修正失敗", 'error');
                 }
             } else {
-                window.showToast("資料已是最新，無需修正", 'success');
+                localStorage.setItem('fifo_migrated_v1', 'true');
+                window.showToast("資料已是最新 FIFO 格式", 'success');
             }
         };
         
@@ -3663,110 +3672,3 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 </div> 
 </body>
 </html>
-        // --- Migration Tool ---
-        window.migrateTradesToFIFO = async () => {
-            if (!confirm("確定要執行 FIFO 歷史資料修正嗎？這將會重新計算所有交易的均價。")) return;
-
-            const batch = writeBatch(db);
-            let updateCount = 0;
-            const log = [];
-
-            for (const t of window.trades) {
-                // Only process trades that have sells or might need recalculation
-                // To be safe, we re-calculate ALL trades to ensure consistency
-
-                // Sort history strictly by timestamp
-                const sortedHistory = [...t.history].sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
-
-                let buyQueue = []; // { price, quantity, remainingQty, costPerShare }
-                let currentAvgPrice = 0;
-                let hasChanges = false;
-
-                // Replay history
-                const newHistory = sortedHistory.map(h => {
-                    if (h.type === 'buy') {
-                        const fee = window.calculateCost(h.price, h.quantity, 'buy');
-                        const costPerShare = ((h.price * h.quantity) + fee) / h.quantity;
-                        buyQueue.push({
-                            price: h.price,
-                            quantity: h.quantity,
-                            remainingQty: h.quantity,
-                            costPerShare: costPerShare
-                        });
-
-                        // Recalculate avg price for consistency (weighted average of CURRENT holdings)
-                        let holdingCost = 0;
-                        let holdingQty = 0;
-                        buyQueue.forEach(lot => {
-                            if (lot.remainingQty > 0) {
-                                holdingCost += (lot.remainingQty * lot.costPerShare);
-                                holdingQty += lot.remainingQty;
-                            }
-                        });
-                        currentAvgPrice = holdingQty > 0 ? (holdingCost / holdingQty) : 0;
-
-                        return h; // Buy record doesn't change
-                    } else if (h.type === 'sell') {
-                        let remainingToSell = h.quantity;
-                        let totalSoldCost = 0;
-
-                        for (let lot of buyQueue) {
-                            if (remainingToSell <= 0) break;
-                            if (lot.remainingQty > 0) {
-                                const deduct = Math.min(lot.remainingQty, remainingToSell);
-                                totalSoldCost += (deduct * lot.costPerShare);
-                                lot.remainingQty -= deduct;
-                                remainingToSell -= deduct;
-                            }
-                        }
-
-                        const soldAvgCost = h.quantity > 0 ? (totalSoldCost / h.quantity) : 0;
-
-                        // Recalculate remaining avg
-                        let holdingCost = 0;
-                        let holdingQty = 0;
-                        buyQueue.forEach(lot => {
-                            if (lot.remainingQty > 0) {
-                                holdingCost += (lot.remainingQty * lot.costPerShare);
-                                holdingQty += lot.remainingQty;
-                            }
-                        });
-                        currentAvgPrice = holdingQty > 0 ? (holdingCost / holdingQty) : 0;
-
-                        // Check if we need to update this history item
-                        // We store the COST BASIS of the sold shares in 'averagePrice' of the sell record
-                        // This allows the history view to show correct Realized P&L
-                        if (Math.abs((h.averagePrice || 0) - soldAvgCost) > 0.01) {
-                            hasChanges = true;
-                            return { ...h, averagePrice: soldAvgCost };
-                        }
-                        return h;
-                    }
-                    return h;
-                });
-
-                // Update Trade State
-                if (hasChanges || Math.abs(t.averagePrice - currentAvgPrice) > 0.01) {
-                    const ref = doc(db, "users", currentUser.uid, "trades", t.id);
-                    batch.update(ref, {
-                        history: newHistory,
-                        averagePrice: currentAvgPrice
-                    });
-                    updateCount++;
-                    log.push(`${t.symbolName}: Avg updated to ${currentAvgPrice.toFixed(2)}`);
-                }
-            }
-
-            if (updateCount > 0) {
-                try {
-                    await batch.commit();
-                    window.showToast(`成功修正 ${updateCount} 筆交易資料`, 'success');
-                    console.log("Migration Log:", log);
-                } catch (e) {
-                    console.error("Migration failed:", e);
-                    window.showToast("資料修正失敗", 'error');
-                }
-            } else {
-                window.showToast("資料已是最新，無需修正", 'success');
-            }
-        };
