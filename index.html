@@ -671,7 +671,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 
@@ -692,6 +692,18 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+
+        // Handle Redirect Result (for iOS PWA)
+        getRedirectResult(auth).then((result) => {
+            if (result) {
+                console.log("Redirect login successful");
+            }
+        }).catch((error) => {
+            console.error("Redirect login failed:", error);
+            // Delay toast slightly to ensure UI is ready
+            setTimeout(() => window.showToast("登入失敗: " + error.message, 'error'), 1000);
+        });
+
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
@@ -1032,6 +1044,15 @@
             btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> 登入中...`;
             lucide.createIcons();
             try {
+                // Detect iOS (iPhone, iPad, iPod)
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                // Use redirect for iOS to avoid popup blocking in PWA/Standalone
+                if (isIOS) {
+                    await signInWithRedirect(auth, provider);
+                    return; // Page will redirect
+                }
+
                 const result = await signInWithPopup(auth, provider);
                 // 登入成功後更新會話信息
                 if (result.user) {
