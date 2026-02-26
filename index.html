@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -307,6 +308,9 @@
                     <input type="text" id="history-search" placeholder="搜尋歷史代號..." class="w-full bg-slate-100 dark:bg-slate-900 border-0 rounded-2xl p-3.5 pl-11 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-shadow" oninput="renderHistory()">
                     <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4 top-3.5"></i>
                 </div>
+                <button onclick="window.toggleHistorySelectionMode()" id="btn-select-mode" class="p-3.5 bg-slate-100 dark:bg-slate-900 rounded-2xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors btn-press">
+                    <i data-lucide="check-square" class="w-5 h-5"></i>
+                </button>
                 <button onclick="showFilterModal()" class="bg-slate-100 dark:bg-slate-900 w-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors btn-press">
                     <i data-lucide="filter" class="w-5 h-5"></i>
                 </button>
@@ -452,7 +456,10 @@
         <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300 max-h-[85dvh] flex flex-col modal-content overflow-y-auto no-scrollbar" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between mb-4 pb-4 border-b dark:border-slate-800">
                 <div><h3 class="text-xl font-black" id="detail-title">交易明細</h3><p class="text-xs text-slate-400 font-bold mt-1" id="detail-subtitle">--</p></div>
-                <button onclick="closeDetailsModal()" class="text-slate-400 bg-slate-100 dark:bg-slate-800 p-2 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="flex gap-2">
+                    <button onclick="window.shareCurrentDetails()" class="text-slate-400 bg-slate-100 dark:bg-slate-800 p-2 rounded-full hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"><i data-lucide="share-2" class="w-5 h-5"></i></button>
+                    <button onclick="closeDetailsModal()" class="text-slate-400 bg-slate-100 dark:bg-slate-800 p-2 rounded-full hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
             </div>
             <div id="detail-list" class="space-y-3 pb-safe"></div>
         </div>
@@ -1814,6 +1821,7 @@
         window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.add('hidden'); window.tradeToDeleteId=null; };
         
         window.viewDetails = (id) => { 
+            window.currentViewingTradeId = id;
             const t = window.trades.find(item => item.id === id);
             if(!t) return; 
             const p = personas[t.persona];
@@ -3501,21 +3509,72 @@
             list.innerHTML = refreshHeader + cardsHtml;
             lucide.createIcons();
         };
+
+        // --- History Selection Logic ---
+        window.isHistorySelectionMode = false;
+        window.selectedHistoryIds = new Set();
+
+        window.toggleHistorySelectionMode = () => {
+            window.isHistorySelectionMode = !window.isHistorySelectionMode;
+            if (!window.isHistorySelectionMode) {
+                window.selectedHistoryIds.clear();
+            }
+            renderHistory();
+        };
+
+        window.toggleHistoryItem = (id) => {
+            if (window.selectedHistoryIds.has(id)) {
+                window.selectedHistoryIds.delete(id);
+            } else {
+                window.selectedHistoryIds.add(id);
+            }
+            renderHistory(); // Re-render to update UI state (e.g. Select All button state, Action Bar)
+        };
+
+        window.selectAllHistory = (filteredIds) => {
+            if (!filteredIds) return;
+            // If all currently visible are selected, deselect all. Otherwise select all.
+            const allSelected = filteredIds.every(id => window.selectedHistoryIds.has(id));
+
+            if (allSelected) {
+                filteredIds.forEach(id => window.selectedHistoryIds.delete(id));
+            } else {
+                filteredIds.forEach(id => window.selectedHistoryIds.add(id));
+            }
+            renderHistory();
+        };
+
+        window.shareSelectedHistory = () => {
+             const ids = Array.from(window.selectedHistoryIds);
+             if(ids.length === 0) {
+                 window.showToast("請至少選擇一筆交易", "warning");
+                 return;
+             }
+             window.openShareModal(ids);
+        };
+
         window.renderHistory = () => {
             const list = document.getElementById('history-list');
             const stats = document.getElementById('history-stats');
             const searchEl = document.getElementById('history-search');
             const term = searchEl ? searchEl.value.trim().toLowerCase() : '';
             
+            // Update Select Button Style
+            const selectBtn = document.getElementById('btn-select-mode');
+            if(selectBtn) {
+                if(window.isHistorySelectionMode) {
+                    selectBtn.classList.add('bg-indigo-100', 'text-indigo-600', 'dark:bg-indigo-900', 'dark:text-indigo-300');
+                    selectBtn.classList.remove('bg-slate-100', 'text-slate-400', 'dark:bg-slate-900');
+                } else {
+                    selectBtn.classList.remove('bg-indigo-100', 'text-indigo-600', 'dark:bg-indigo-900', 'dark:text-indigo-300');
+                    selectBtn.classList.add('bg-slate-100', 'text-slate-400', 'dark:bg-slate-900');
+                }
+            }
+
             const closedTrades = window.trades.filter(t => {
                 const hasSells = t.history && t.history.some(h => h.type === 'sell');
                 if (t.status !== 'closed' && !hasSells) return false;
                 if(term && !t.symbolCode.toLowerCase().includes(term) && !t.symbolName.toLowerCase().includes(term)) return false;
-
-                // Optional: Apply Date Filter to list as well?
-                // Currently filter only affects Stats. Let's keep it consistent or follow user request.
-                // User asked for "Search".
-
                 return true;
             }).sort((a, b) => {
                 const getLastSellTime = (trade) => {
@@ -3534,12 +3593,12 @@
             }
 
             if (window.viewMode === 'list') {
-                list.className = 'flex flex-col gap-2 pb-20';
+                list.className = 'flex flex-col gap-2 pb-24'; // Increased padding for floating bar
             } else {
-                list.className = 'space-y-4 pb-20';
+                list.className = 'space-y-4 pb-24';
             }
 
-            list.innerHTML = closedTrades.map(t => {
+            let html = closedTrades.map(t => {
                 let totalPnL = 0;
                 let totalFees = 0;
                 let totalCost = 0; 
@@ -3568,13 +3627,35 @@
                 const borderClass = totalPnL >= 0 ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500';
                 const statusBadge = t.status === 'open' ? '<span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 ml-2">持倉中</span>' : '';
                 
+                // Selection Checkbox
+                let selectHtml = '';
+                let onclickAction = `viewDetails('${t.id}')`;
+                let itemBgClass = 'bg-white dark:bg-slate-900';
+
+                if (window.isHistorySelectionMode) {
+                    const isSelected = window.selectedHistoryIds.has(t.id);
+                    const checkState = isSelected ? 'checked' : '';
+                    const checkBg = isSelected ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-900' : '';
+                    itemBgClass = isSelected ? 'bg-indigo-50 dark:bg-indigo-900/10' : 'bg-white dark:bg-slate-900';
+
+                    onclickAction = `window.toggleHistoryItem('${t.id}')`; // Toggle selection instead of viewing details
+
+                    selectHtml = `
+                    <div class="mr-3 flex-shrink-0">
+                         <div class="w-6 h-6 rounded-full border-2 ${isSelected ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'} flex items-center justify-center transition-all">
+                             ${isSelected ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+                         </div>
+                    </div>`;
+                }
+
                 if (window.viewMode === 'list') {
                     // List View
-                    return `<div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} flex items-center justify-between btn-press" onclick="viewDetails('${t.id}')">
-                        <div class="flex items-center gap-3">
-                            <div class="flex flex-col">
+                    return `<div class="${itemBgClass} px-4 py-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} flex items-center justify-between btn-press cursor-pointer" onclick="${onclickAction}">
+                        <div class="flex items-center gap-3 w-full">
+                            ${selectHtml}
+                            <div class="flex flex-col flex-1 min-w-0">
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-sm font-black text-slate-800 dark:text-slate-100">${t.symbolName}</span>
+                                    <span class="text-sm font-black text-slate-800 dark:text-slate-100 truncate">${t.symbolName}</span>
                                     <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
                                     ${statusBadge}
                                 </div>
@@ -3583,37 +3664,35 @@
                                     <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title.substring(0,2)}</span>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-4">
-                            <div class="text-right">
+
+                            <div class="text-right flex-shrink-0">
                                 <p class="text-base font-black ${pnlClass}">${sign}$${formatLargeNumber(totalPnL)}</p>
                                 <p class="text-[0.625rem] font-bold text-slate-400">(${roi}%)</p>
                             </div>
-                            <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
                         </div>
                     </div>`;
                 } else {
-                    // Card View
-                    return `<div class="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative" onclick="viewDetails('${t.id}')">
+                    // Card View - Apply similar changes
+                    return `<div class="${itemBgClass} px-5 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 ${borderClass} btn-press flex justify-between items-center group relative cursor-pointer" onclick="${onclickAction}">
                         
-                        <div class="flex flex-col gap-1.5">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
-                                <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
-                                ${statusBadge}
-                            </div>
+                        <div class="flex items-center gap-3">
+                            ${selectHtml}
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-wider">${dateDisplay}</span>
+                                    <span class="text-[0.5625rem] font-black px-1.5 py-0.5 rounded text-white" style="background-color: ${personas[t.persona].color}">${personas[t.persona].title}</span>
+                                    ${statusBadge}
+                                </div>
 
-                            <div class="flex items-baseline gap-1.5">
-                                <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
-                                <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
-                            </div>
+                                <div class="flex items-baseline gap-1.5">
+                                    <h3 class="text-base font-black text-slate-800 dark:text-slate-100">${t.symbolName}</h3>
+                                    <span class="text-xs font-bold text-slate-400">${t.symbolCode}</span>
+                                </div>
 
-                            <div class="flex items-center gap-2 text-[0.625rem] text-slate-400 font-bold">
-                                <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
-                                <span>費 $${totalFees.toLocaleString()}</span>
+                                <div class="flex items-center gap-2 text-[0.625rem] text-slate-400 font-bold">
+                                    <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
+                                    <span>費 $${totalFees.toLocaleString()}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -3626,15 +3705,35 @@
                                 <p class="text-[0.625rem] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
                             </div>
 
+                            ${!window.isHistorySelectionMode ? `
                             <button onclick="event.stopPropagation(); requestDelete('${t.id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
+                            </button>` : ''}
                         </div>
 
                     </div>`;
                 }
             }).join('');
+
+            // Action Bar for Selection Mode
+            if (window.isHistorySelectionMode) {
+                const selectedCount = window.selectedHistoryIds.size;
+                // Prepare list of IDs currently visible to support Select All
+                const visibleIds = JSON.stringify(closedTrades.map(t => t.id)).replace(/"/g, "'");
+
+                html += `
+                <div class="fixed bottom-20 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                    <div class="flex items-center gap-3">
+                        <button onclick="window.selectAllHistory(${visibleIds})" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors">全選</button>
+                        <span class="text-xs font-black text-slate-800 dark:text-slate-100">已選 ${selectedCount} 筆</span>
+                    </div>
+                    <button onclick="window.shareSelectedHistory()" class="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" ${selectedCount === 0 ? 'disabled' : ''}>
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i> 產生圖片
+                    </button>
+                </div>`;
+            }
             
+            list.innerHTML = html;
             lucide.createIcons();
         };
         // ✅ 貼上這段新的 (包含彈窗開關 + 詳細費用計算)
@@ -3733,7 +3832,198 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             document.getElementById('modal-total-fee').textContent = `$${formatLargeNumber(totalFees)}`;
             document.getElementById('modal-total-tax').textContent = `$${formatLargeNumber(totalTax)}`;
             document.getElementById('modal-win-rate').textContent = winStr;
-        };    </script>
+        };
+
+        // --- Share Logic ---
+        window.currentViewingTradeId = null;
+        window.tradesToShare = [];
+
+        window.shareCurrentDetails = () => {
+             if(window.currentViewingTradeId) {
+                 window.openShareModal([window.currentViewingTradeId]);
+             }
+        };
+
+        window.openShareModal = (ids) => {
+            window.tradesToShare = ids;
+            document.getElementById('shareModal').classList.remove('hidden');
+            window.renderShareCard();
+        };
+
+        window.closeShareModal = () => {
+            document.getElementById('shareModal').classList.add('hidden');
+        };
+
+        window.updateSharePreview = () => {
+            window.renderShareCard();
+        };
+
+        window.renderShareCard = () => {
+            const container = document.getElementById('share-card-container');
+            const showAmounts = document.getElementById('toggle-share-amounts').checked;
+            const showStrategy = document.getElementById('toggle-share-strategy').checked;
+
+            const selectedTrades = window.trades.filter(t => window.tradesToShare.includes(t.id));
+            if (selectedTrades.length === 0) return;
+
+            // Sort by close date desc
+            selectedTrades.sort((a,b) => (b.exitDate || '0').localeCompare(a.exitDate || '0'));
+
+            // Calculate Totals
+            let totalPnl = 0;
+            let totalWin = 0;
+
+            const itemsHtml = selectedTrades.map(t => {
+                let pnl = 0;
+                let cost = 0;
+                t.history.forEach(h => {
+                    if(h.type === 'sell') {
+                        const basis = h.averagePrice || t.averagePrice;
+                        pnl += window.calculateNetPnL(basis, h.price, h.quantity);
+                        cost += (basis * h.quantity);
+                    }
+                });
+
+                totalPnl += pnl;
+                if(pnl > 0) totalWin++;
+
+                const roi = cost > 0 ? ((pnl / cost) * 100).toFixed(1) : 0;
+                const pnlColor = pnl >= 0 ? 'text-red-400' : 'text-green-400';
+                const sign = pnl >= 0 ? '+' : '';
+
+                // Strategy Info
+                let stratHtml = '';
+                if (showStrategy) {
+                    const p = personas[t.persona];
+                    stratHtml = `
+                    <div class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-700/50">
+                        <span class="text-[0.625rem] px-1.5 py-0.5 rounded font-bold text-slate-900" style="background-color: ${p.color}">${p.title}</span>
+                        <span class="text-[0.625rem] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400">${t.strategyName}</span>
+                        ${t.entryWind ? `<span class="text-[0.625rem] px-1.5 py-0.5 rounded font-bold border border-slate-700 text-slate-400">${t.entryWind}</span>` : ''}
+                    </div>`;
+                }
+
+                // Amount Info
+                let amountHtml = '';
+                if (showAmounts) {
+                    amountHtml = `
+                    <div class="grid grid-cols-2 gap-2 mt-2 text-[0.625rem] font-bold text-slate-500">
+                        <div>均價: $${t.averagePrice.toFixed(1)}</div>
+                        <div>股數: ${t.totalQuantity}</div>
+                        <div class="col-span-2 text-right text-xs ${pnlColor}">淨損益: ${sign}$${Math.round(pnl).toLocaleString()}</div>
+                    </div>`;
+                }
+
+                return `
+                <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 mb-3 last:mb-0">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-sm font-black text-slate-100">${t.symbolName}</span>
+                                <span class="text-[0.625rem] font-bold text-slate-500">${t.symbolCode}</span>
+                            </div>
+                            <div class="text-[0.625rem] text-slate-500 font-bold mt-0.5">${t.entryDate} ${t.exitDate ? ' ~ '+t.exitDate : ''}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-black ${pnlColor}">${sign}${roi}%</span>
+                        </div>
+                    </div>
+                    ${amountHtml}
+                    ${stratHtml}
+                </div>`;
+            }).join('');
+
+            // Total Summary
+            let summaryHtml = '';
+            if (selectedTrades.length > 1) {
+                const totalWinRate = Math.round((totalWin / selectedTrades.length) * 100);
+                const totalSign = totalPnl >= 0 ? '+' : '';
+                const totalColor = totalPnl >= 0 ? 'text-red-400' : 'text-green-400';
+
+                const totalMoneyDisplay = showAmounts ? `<div class="text-2xl font-black ${totalColor} mt-1">${totalSign}$${formatLargeNumber(totalPnl)}</div>` : '';
+
+                summaryHtml = `
+                <div class="bg-indigo-900/20 p-4 rounded-2xl border border-indigo-500/20 mb-4 text-center">
+                    <div class="text-[0.625rem] font-bold text-indigo-300 uppercase tracking-widest mb-1">Total Result</div>
+                    <div class="flex justify-center gap-4 text-xs font-bold text-slate-300">
+                        <span>${selectedTrades.length} 筆交易</span>
+                        <span>勝率 ${totalWinRate}%</span>
+                    </div>
+                    ${totalMoneyDisplay}
+                </div>`;
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
+
+            container.innerHTML = `
+                <div class="bg-slate-900 p-6 relative overflow-hidden">
+                    <!-- Background Decoration -->
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
+
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-6 relative z-10">
+                        <div>
+                            <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                                <div class="w-6 h-6 bg-indigo-500 rounded-lg flex items-center justify-center"><i data-lucide="zap" class="w-3 h-3 text-white"></i></div>
+                                交易結算
+                            </h2>
+                            <p class="text-[0.625rem] font-bold text-slate-500 mt-1 uppercase tracking-widest">${todayStr}</p>
+                        </div>
+                        <div class="text-right">
+                             <div class="text-[0.625rem] font-bold text-slate-600 border border-slate-700 rounded-full px-2 py-0.5">Kite Journal</div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    ${summaryHtml}
+
+                    <!-- List -->
+                    <div class="relative z-10 space-y-3">
+                        ${itemsHtml}
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-6 pt-4 border-t border-slate-800 text-center relative z-10">
+                        <p class="text-[0.625rem] font-bold text-slate-600">Generated by 風箏選股交易紀錄系統</p>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => lucide.createIcons(), 0);
+        };
+
+        window.downloadShareImage = async () => {
+            const container = document.querySelector('#share-card-container > div'); // The inner content div
+            if(!container) return;
+
+            const btn = document.querySelector('#shareModal button[onclick="window.downloadShareImage()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 生成中...';
+            lucide.createIcons();
+
+            try {
+                // Use html2canvas
+                const canvas = await html2canvas(container, {
+                    backgroundColor: '#0f172a', // slate-900
+                    scale: 2, // Retina
+                    logging: false,
+                    useCORS: true
+                });
+
+                const link = document.createElement('a');
+                link.download = `kite-share-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch(e) {
+                console.error("Screenshot failed:", e);
+                window.showToast("圖片生成失敗", 'error');
+            } finally {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }
+        };
+    </script>
    <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]" onclick="closeStatsModal()">
     <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300" onclick="event.stopPropagation()">
         <div class="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -3770,5 +4060,67 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
         </div>
     </div>
 </div> 
+
+<div id="shareModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[450] overflow-y-auto" onclick="window.closeShareModal()">
+    <div class="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-lg shadow-2xl animate-in zoom-in duration-300 flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="share-2" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 dark:text-slate-100">分享交易紀錄</h3>
+                    <p class="text-[0.625rem] text-slate-400 font-bold uppercase tracking-wider">Share Trades</p>
+                </div>
+            </div>
+            <button onclick="window.closeShareModal()" class="text-slate-400 bg-slate-50 dark:bg-slate-800 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <!-- Controls -->
+        <div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-500 shadow-sm"><i data-lucide="dollar-sign" class="w-4 h-4"></i></div>
+                        <span class="text-sm font-bold text-slate-600 dark:text-slate-300">顯示詳細金額</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-share-amounts" class="sr-only peer toggle-checkbox" onchange="window.updateSharePreview()">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-indigo-500 shadow-sm"><i data-lucide="lightbulb" class="w-4 h-4"></i></div>
+                        <span class="text-sm font-bold text-slate-600 dark:text-slate-300">顯示進場策略</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-share-strategy" class="sr-only peer toggle-checkbox" checked onchange="window.updateSharePreview()">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Container -->
+        <div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex justify-center min-h-[300px]">
+            <div id="share-card-container" class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-3xl shadow-xl overflow-hidden relative border border-slate-800">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800 shrink-0 flex gap-3">
+            <button onclick="window.closeShareModal()" class="flex-1 py-3 rounded-2xl font-black text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">取消</button>
+            <button onclick="window.downloadShareImage()" class="flex-[2] py-3 rounded-2xl font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-5 h-5"></i> 下載圖片
+            </button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
