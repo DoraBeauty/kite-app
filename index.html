@@ -3846,7 +3846,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
         window.openShareModal = (ids) => {
             window.tradesToShare = ids;
             document.getElementById('shareModal').classList.remove('hidden');
-            window.renderShareCard();
+            window.renderSharePreview();
         };
 
         window.closeShareModal = () => {
@@ -3854,138 +3854,15 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
         };
 
         window.updateSharePreview = () => {
-            window.renderShareCard();
+            window.renderSharePreview();
         };
 
-        window.renderShareCard = () => {
-            const container = document.getElementById('share-card-container');
+        window.generateShareTextContent = () => {
             const showAmounts = document.getElementById('toggle-share-amounts').checked;
             const showStrategy = document.getElementById('toggle-share-strategy').checked;
 
             const selectedTrades = window.trades.filter(t => window.tradesToShare.includes(t.id));
-            if (selectedTrades.length === 0) return;
-
-            // Sort by close date desc
-            selectedTrades.sort((a,b) => (b.exitDate || '0').localeCompare(a.exitDate || '0'));
-
-            // Calculate Totals
-            let totalPnl = 0;
-            let totalWin = 0;
-
-            const itemsHtml = selectedTrades.map(t => {
-                let pnl = 0;
-                let cost = 0;
-                t.history.forEach(h => {
-                    if(h.type === 'sell') {
-                        const basis = h.averagePrice || t.averagePrice;
-                        pnl += window.calculateNetPnL(basis, h.price, h.quantity);
-                        cost += (basis * h.quantity);
-                    }
-                });
-
-                totalPnl += pnl;
-                if(pnl > 0) totalWin++;
-
-                const roi = cost > 0 ? ((pnl / cost) * 100).toFixed(1) : 0;
-                const pnlColor = pnl >= 0 ? 'text-red-400' : 'text-green-400';
-                const sign = pnl >= 0 ? '+' : '';
-
-                // Strategy Info
-                let stratHtml = '';
-                if (showStrategy) {
-                    const p = personas[t.persona];
-                    stratHtml = `
-                    <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-700">
-                        <span class="text-[0.7rem] px-2 py-1 rounded font-bold text-slate-900" style="background-color: ${p.color}">${p.title}</span>
-                        <span class="text-[0.7rem] px-2 py-1 rounded font-bold bg-slate-800 text-slate-400">${t.strategyName}</span>
-                        ${t.entryWind ? `<span class="text-[0.7rem] px-2 py-1 rounded font-bold border border-slate-600 text-slate-400">${t.entryWind}</span>` : ''}
-                    </div>`;
-                }
-
-                // Amount Info
-                let amountHtml = '';
-                if (showAmounts) {
-                    amountHtml = `
-                    <div class="grid grid-cols-2 gap-2 mt-3 text-xs font-bold text-slate-400">
-                        <div>均價: $${t.averagePrice.toFixed(1)}</div>
-                        <div>股數: ${t.totalQuantity}</div>
-                        <div class="col-span-2 text-right text-sm ${pnlColor}">淨損益: ${sign}$${Math.round(pnl).toLocaleString()}</div>
-                    </div>`;
-                }
-
-                return `
-                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 mb-3 last:mb-0">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-lg font-black text-white">${t.symbolName}</span>
-                                <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
-                            </div>
-                            <div class="text-xs text-slate-500 font-bold mt-1">${t.entryDate} ${t.exitDate ? ' ~ '+t.exitDate : ''}</div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-black ${pnlColor}">${sign}${roi}%</span>
-                        </div>
-                    </div>
-                    ${amountHtml}
-                    ${stratHtml}
-                </div>`;
-            }).join('');
-
-            // Total Summary
-            let summaryHtml = '';
-            if (selectedTrades.length > 1) {
-                const totalWinRate = Math.round((totalWin / selectedTrades.length) * 100);
-                const totalSign = totalPnl >= 0 ? '+' : '';
-                const totalColor = totalPnl >= 0 ? 'text-red-400' : 'text-green-400';
-
-                const totalMoneyDisplay = showAmounts ? `<div class="text-3xl font-black ${totalColor} mt-2">${totalSign}$${formatLargeNumber(totalPnl)}</div>` : '';
-
-                summaryHtml = `
-                <div class="bg-indigo-900 p-4 rounded-2xl border border-indigo-700 mb-4 text-center">
-                    <div class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Total Result</div>
-                    <div class="flex justify-center gap-6 text-sm font-bold text-slate-200">
-                        <span>${selectedTrades.length} 筆交易</span>
-                        <span>勝率 ${totalWinRate}%</span>
-                    </div>
-                    ${totalMoneyDisplay}
-                </div>`;
-            }
-
-            const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
-
-            container.innerHTML = `
-                <div class="bg-slate-900 p-6 relative overflow-hidden text-slate-100 share-card-content">
-                    <!-- Header -->
-                    <div class="flex justify-between items-center mb-6 relative z-10">
-                        <div>
-                            <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-white"></i></div>
-                                交易結算
-                            </h2>
-                            <p class="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">${todayStr}</p>
-                        </div>
-                        <div class="text-right">
-                             <div class="text-xs font-bold text-slate-500 border border-slate-700 rounded-full px-3 py-1">Kite Journal</div>
-                        </div>
-                    </div>
-
-                    <!-- Summary -->
-                    ${summaryHtml}
-
-                    <!-- List -->
-                    <div class="relative z-10 space-y-3">
-                        ${itemsHtml}
-                    </div>
-                </div>
-            `;
-
-            setTimeout(() => lucide.createIcons(), 0);
-        };
-
-        window.copyShareText = () => {
-            const selectedTrades = window.trades.filter(t => window.tradesToShare.includes(t.id));
-            if (selectedTrades.length === 0) return;
+            if (selectedTrades.length === 0) return '';
 
             // Sort by close date desc
             selectedTrades.sort((a,b) => (b.exitDate || '0').localeCompare(a.exitDate || '0'));
@@ -4015,16 +3892,40 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 
                 text += `\n${t.symbolName} (${t.symbolCode})\n`;
                 text += `-------------------\n`;
-                text += `損益: ${sign}$${Math.round(pnl).toLocaleString()} (${sign}${roi}%)\n`;
-                text += `策略: ${t.strategyName} | 風度: ${wind}\n`;
+                if(showAmounts) {
+                     text += `損益: ${sign}$${Math.round(pnl).toLocaleString()} (${sign}${roi}%)\n`;
+                } else {
+                     text += `損益: (${sign}${roi}%)\n`;
+                }
+
+                if(showStrategy) {
+                    text += `策略: ${t.strategyName} | 風度: ${wind}\n`;
+                }
             });
 
             if (selectedTrades.length > 1) {
                 const totalRoi = totalCost > 0 ? ((totalPnl / totalCost) * 100).toFixed(1) : 0;
                 const sign = totalPnl >= 0 ? '+' : '';
                 text += `\n===================\n`;
-                text += `總結算: ${sign}$${Math.round(totalPnl).toLocaleString()} (${sign}${totalRoi}%)\n`;
+                if (showAmounts) {
+                     text += `總結算: ${sign}$${Math.round(totalPnl).toLocaleString()} (${sign}${totalRoi}%)\n`;
+                } else {
+                     text += `總結算: (${sign}${totalRoi}%)\n`;
+                }
             }
+
+            return text;
+        }
+
+        window.renderSharePreview = () => {
+            const container = document.getElementById('share-text-preview');
+            const text = window.generateShareTextContent();
+            container.textContent = text;
+        };
+
+        window.copyShareText = () => {
+            const text = window.generateShareTextContent();
+            if(!text) return;
 
             navigator.clipboard.writeText(text).then(() => {
                 window.showToast("文字已複製", "success");
@@ -4116,8 +4017,11 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
         </div>
 
         <!-- Preview Container -->
-        <div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex justify-center min-h-[300px]">
-            <div id="share-card-container" class="w-full max-w-sm bg-slate-900 text-slate-100 rounded-3xl shadow-xl overflow-hidden relative border border-slate-800">
+        <div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex flex-col min-h-[300px]">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">文字預覽 (Text Preview)</span>
+            </div>
+            <div class="w-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl shadow-inner border border-slate-200 dark:border-slate-700 p-4 font-mono text-xs leading-relaxed overflow-auto flex-1 whitespace-pre-wrap select-text" id="share-text-preview">
                 <!-- Content will be injected here -->
             </div>
         </div>
