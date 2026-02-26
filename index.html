@@ -3896,10 +3896,10 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 if (showStrategy) {
                     const p = personas[t.persona];
                     stratHtml = `
-                    <div class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-700/50">
-                        <span class="text-[0.7rem] px-1.5 py-0.5 rounded font-bold text-slate-900" style="background-color: ${p.color}">${p.title}</span>
-                        <span class="text-[0.7rem] px-1.5 py-0.5 rounded font-bold bg-slate-800 text-slate-400">${t.strategyName}</span>
-                        ${t.entryWind ? `<span class="text-[0.7rem] px-1.5 py-0.5 rounded font-bold border border-slate-700 text-slate-400">${t.entryWind}</span>` : ''}
+                    <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-700">
+                        <span class="text-[0.7rem] px-2 py-1 rounded font-bold text-slate-900" style="background-color: ${p.color}">${p.title}</span>
+                        <span class="text-[0.7rem] px-2 py-1 rounded font-bold bg-slate-800 text-slate-400">${t.strategyName}</span>
+                        ${t.entryWind ? `<span class="text-[0.7rem] px-2 py-1 rounded font-bold border border-slate-600 text-slate-400">${t.entryWind}</span>` : ''}
                     </div>`;
                 }
 
@@ -3907,25 +3907,25 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 let amountHtml = '';
                 if (showAmounts) {
                     amountHtml = `
-                    <div class="grid grid-cols-2 gap-2 mt-2 text-xs font-bold text-slate-500">
+                    <div class="grid grid-cols-2 gap-2 mt-3 text-xs font-bold text-slate-400">
                         <div>均價: $${t.averagePrice.toFixed(1)}</div>
                         <div>股數: ${t.totalQuantity}</div>
-                        <div class="col-span-2 text-right text-xs ${pnlColor}">淨損益: ${sign}$${Math.round(pnl).toLocaleString()}</div>
+                        <div class="col-span-2 text-right text-sm ${pnlColor}">淨損益: ${sign}$${Math.round(pnl).toLocaleString()}</div>
                     </div>`;
                 }
 
                 return `
-                <div class="bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50 mb-2 last:mb-0">
+                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 mb-3 last:mb-0">
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="flex items-baseline gap-2">
-                                <span class="text-base font-black text-slate-100">${t.symbolName}</span>
-                                <span class="text-xs font-bold text-slate-500">${t.symbolCode}</span>
+                                <span class="text-lg font-black text-white">${t.symbolName}</span>
+                                <span class="text-sm font-bold text-slate-400">${t.symbolCode}</span>
                             </div>
-                            <div class="text-xs text-slate-500 font-bold mt-0.5">${t.entryDate} ${t.exitDate ? ' ~ '+t.exitDate : ''}</div>
+                            <div class="text-xs text-slate-500 font-bold mt-1">${t.entryDate} ${t.exitDate ? ' ~ '+t.exitDate : ''}</div>
                         </div>
                         <div class="text-right">
-                            <span class="text-xl font-black ${pnlColor}">${sign}${roi}%</span>
+                            <span class="text-2xl font-black ${pnlColor}">${sign}${roi}%</span>
                         </div>
                     </div>
                     ${amountHtml}
@@ -3940,12 +3940,12 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 const totalSign = totalPnl >= 0 ? '+' : '';
                 const totalColor = totalPnl >= 0 ? 'text-red-400' : 'text-green-400';
 
-                const totalMoneyDisplay = showAmounts ? `<div class="text-2xl font-black ${totalColor} mt-1">${totalSign}$${formatLargeNumber(totalPnl)}</div>` : '';
+                const totalMoneyDisplay = showAmounts ? `<div class="text-3xl font-black ${totalColor} mt-2">${totalSign}$${formatLargeNumber(totalPnl)}</div>` : '';
 
                 summaryHtml = `
-                <div class="bg-indigo-900/20 p-3 rounded-2xl border border-indigo-500/20 mb-3 text-center">
-                    <div class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">Total Result</div>
-                    <div class="flex justify-center gap-4 text-xs font-bold text-slate-300">
+                <div class="bg-indigo-900 p-4 rounded-2xl border border-indigo-700 mb-4 text-center">
+                    <div class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Total Result</div>
+                    <div class="flex justify-center gap-6 text-sm font-bold text-slate-200">
                         <span>${selectedTrades.length} 筆交易</span>
                         <span>勝率 ${totalWinRate}%</span>
                     </div>
@@ -3956,18 +3956,18 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
 
             container.innerHTML = `
-                <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 relative overflow-hidden">
+                <div class="bg-slate-900 p-6 relative overflow-hidden text-slate-100 share-card-content">
                     <!-- Header -->
-                    <div class="flex justify-between items-center mb-4 relative z-10">
+                    <div class="flex justify-between items-center mb-6 relative z-10">
                         <div>
-                            <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                                <div class="w-6 h-6 bg-indigo-500 rounded-lg flex items-center justify-center"><i data-lucide="zap" class="w-3 h-3 text-white"></i></div>
+                            <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><i data-lucide="zap" class="w-4 h-4 text-white"></i></div>
                                 交易結算
                             </h2>
-                            <p class="text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest">${todayStr}</p>
+                            <p class="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">${todayStr}</p>
                         </div>
                         <div class="text-right">
-                             <div class="text-xs font-bold text-slate-600 border border-slate-700 rounded-full px-2 py-0.5">Kite Journal</div>
+                             <div class="text-xs font-bold text-slate-500 border border-slate-700 rounded-full px-3 py-1">Kite Journal</div>
                         </div>
                     </div>
 
@@ -3985,7 +3985,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
         };
 
         window.downloadShareImage = async () => {
-            const container = document.querySelector('#share-card-container > div'); // The inner content div
+            const container = document.querySelector('#share-card-container > div');
             if(!container) return;
 
             const btn = document.querySelector('#shareModal button[onclick="window.downloadShareImage()"]');
@@ -3994,17 +3994,18 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             lucide.createIcons();
 
             try {
-                // Use html2canvas
+                // Use html2canvas with simpler config for stability
                 const canvas = await html2canvas(container, {
-                    backgroundColor: '#0f172a', // slate-900
-                    scale: 3, // Higher quality
+                    backgroundColor: '#0f172a', // Solid slate-900
+                    scale: 3,
                     logging: false,
                     useCORS: true,
                     onclone: (doc) => {
-                        const el = doc.querySelector('.bg-gradient-to-br');
+                        const el = doc.querySelector('.share-card-content');
                         if(el) {
                             el.style.width = '420px';
-                            el.style.padding = '24px';
+                            el.style.padding = '32px';
+                            el.style.borderRadius = '0'; // Flat corners for export can look cleaner
                         }
                     }
                 });
@@ -4020,6 +4021,57 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 btn.innerHTML = originalContent;
                 lucide.createIcons();
             }
+        };
+
+        window.copyShareText = () => {
+            const selectedTrades = window.trades.filter(t => window.tradesToShare.includes(t.id));
+            if (selectedTrades.length === 0) return;
+
+            // Sort by close date desc
+            selectedTrades.sort((a,b) => (b.exitDate || '0').localeCompare(a.exitDate || '0'));
+
+            let text = `【交易結算】 ${window.getLocalISODate()}\n`;
+
+            let totalPnl = 0;
+            let totalCost = 0;
+
+            selectedTrades.forEach(t => {
+                let pnl = 0;
+                let cost = 0;
+                t.history.forEach(h => {
+                    if(h.type === 'sell') {
+                        const basis = h.averagePrice || t.averagePrice;
+                        pnl += window.calculateNetPnL(basis, h.price, h.quantity);
+                        cost += (basis * h.quantity);
+                    }
+                });
+                totalPnl += pnl;
+                totalCost += cost;
+
+                const roi = cost > 0 ? ((pnl / cost) * 100).toFixed(1) : 0;
+                const sign = pnl >= 0 ? '+' : '';
+                const wind = t.entryWind || '無';
+                const p = personas[t.persona];
+
+                text += `\n${t.symbolName} (${t.symbolCode})\n`;
+                text += `-------------------\n`;
+                text += `損益: ${sign}$${Math.round(pnl).toLocaleString()} (${sign}${roi}%)\n`;
+                text += `策略: ${t.strategyName} | 風度: ${wind}\n`;
+            });
+
+            if (selectedTrades.length > 1) {
+                const totalRoi = totalCost > 0 ? ((totalPnl / totalCost) * 100).toFixed(1) : 0;
+                const sign = totalPnl >= 0 ? '+' : '';
+                text += `\n===================\n`;
+                text += `總結算: ${sign}$${Math.round(totalPnl).toLocaleString()} (${sign}${totalRoi}%)\n`;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                window.showToast("文字已複製", "success");
+            }).catch(err => {
+                console.error("Copy failed", err);
+                window.showToast("複製失敗", "error");
+            });
         };
     </script>
    <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[400]" onclick="closeStatsModal()">
@@ -4112,7 +4164,10 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 
         <!-- Footer -->
         <div class="p-6 border-t border-slate-100 dark:border-slate-800 shrink-0 flex gap-3">
-            <button onclick="window.closeShareModal()" class="flex-1 py-3 rounded-2xl font-black text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">取消</button>
+            <button onclick="window.closeShareModal()" class="py-3 px-4 rounded-2xl font-black text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">取消</button>
+            <button onclick="window.copyShareText()" class="flex-1 py-3 rounded-2xl font-black bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 flex items-center justify-center gap-2 transition-colors">
+                <i data-lucide="copy" class="w-5 h-5"></i> 複製文字
+            </button>
             <button onclick="window.downloadShareImage()" class="flex-[2] py-3 rounded-2xl font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
                 <i data-lucide="download" class="w-5 h-5"></i> 下載圖片
             </button>
