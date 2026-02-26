@@ -2633,7 +2633,7 @@
                     let tradePnL = 0;
                     t.history.forEach(h => {
                         if(h.type === 'sell') {
-                            tradePnL += window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                            tradePnL += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         }
                     });
 
@@ -2645,7 +2645,7 @@
                 // Daily/Monthly PnL (Per Sell Event)
                 t.history.forEach(h => {
                     if(h.type === 'sell') {
-                        const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         const date = h.date;
                         const month = date.substring(0, 7); // YYYY-MM
 
@@ -2690,7 +2690,7 @@
 
             closedTrades.forEach(t => {
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 if(pnl > 0) {
                     currentWinStreak++;
@@ -2760,7 +2760,7 @@
                      } else {
                          // calculateCost returns fee + tax for sell
                          fee = window.calculateCost(h.price, h.quantity, 'sell');
-                         pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                         pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                      }
 
                      rows.push([
@@ -2808,7 +2808,7 @@
             closedTrades.forEach(t => {
                 let pnl = 0;
                 let exitWind = t.exitWind || '無風';
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                 
                 if (personaStats[t.persona] !== undefined) personaStats[t.persona] += pnl;
                 if (windStats[exitWind] !== undefined) windStats[exitWind] += pnl;
@@ -2934,7 +2934,7 @@
                 let wins = 0;
                 slice.forEach(t => {
                     let pnl = 0;
-                    t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                    t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                     if(pnl > 0) wins++;
                 });
                 labels.push(sorted[i].exitDate ? sorted[i].exitDate.substring(5) : '-');
@@ -2996,7 +2996,7 @@
                 const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
 
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 for(const k in buckets) {
                     if(days >= buckets[k].min && days <= buckets[k].max) {
@@ -3039,7 +3039,7 @@
                 if(!t.mistakeTags || t.mistakeTags.length === 0) return;
 
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 t.mistakeTags.forEach(tag => {
                     if(!stats[tag]) stats[tag] = { count: 0, pnl: 0 };
@@ -3089,7 +3089,7 @@
                     let winCount = 0;
                     tradesInCell.forEach(t => {
                         let pnl = 0;
-                        t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(t.averagePrice, h.price, h.quantity); });
+                        t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                         cellPnl += pnl;
                         if(pnl > 0) winCount++;
                     });
@@ -3124,7 +3124,7 @@
             trades.forEach(t => {
                 t.history.forEach(h => {
                     if (h.type === 'sell') {
-                        const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         allHistory.push({ date: h.date, pnl: pnl });
                     }
                 });
@@ -3656,7 +3656,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             trades.forEach(t => {
                 t.history.forEach(h => {
                     if(h.type === 'sell'){
-                        const pnl = window.calculateNetPnL(t.averagePrice, h.price, h.quantity);
+                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         
                         // 1. 累計全時段損益 (算現金用)
                         allTimePL += pnl;
