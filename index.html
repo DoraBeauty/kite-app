@@ -11,7 +11,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -3984,45 +3983,6 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             setTimeout(() => lucide.createIcons(), 0);
         };
 
-        window.downloadShareImage = async () => {
-            const container = document.querySelector('#share-card-container > div');
-            if(!container) return;
-
-            const btn = document.querySelector('#shareModal button[onclick="window.downloadShareImage()"]');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 生成中...';
-            lucide.createIcons();
-
-            try {
-                // Use html2canvas with simpler config for stability
-                const canvas = await html2canvas(container, {
-                    backgroundColor: '#0f172a', // Solid slate-900
-                    scale: 3,
-                    logging: false,
-                    useCORS: true,
-                    onclone: (doc) => {
-                        const el = doc.querySelector('.share-card-content');
-                        if(el) {
-                            el.style.width = '420px';
-                            el.style.padding = '32px';
-                            el.style.borderRadius = '0'; // Flat corners for export can look cleaner
-                        }
-                    }
-                });
-
-                const link = document.createElement('a');
-                link.download = `kite-share-${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch(e) {
-                console.error("Screenshot failed:", e);
-                window.showToast("圖片生成失敗", 'error');
-            } finally {
-                btn.innerHTML = originalContent;
-                lucide.createIcons();
-            }
-        };
-
         window.copyShareText = () => {
             const selectedTrades = window.trades.filter(t => window.tradesToShare.includes(t.id));
             if (selectedTrades.length === 0) return;
@@ -4164,12 +4124,9 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
 
         <!-- Footer -->
         <div class="p-6 border-t border-slate-100 dark:border-slate-800 shrink-0 flex gap-3">
-            <button onclick="window.closeShareModal()" class="py-3 px-4 rounded-2xl font-black text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">取消</button>
-            <button onclick="window.copyShareText()" class="flex-1 py-3 rounded-2xl font-black bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 flex items-center justify-center gap-2 transition-colors">
+            <button onclick="window.closeShareModal()" class="py-3 px-6 rounded-2xl font-black text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">取消</button>
+            <button onclick="window.copyShareText()" class="flex-1 py-3 rounded-2xl font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 transition-colors">
                 <i data-lucide="copy" class="w-5 h-5"></i> 複製文字
-            </button>
-            <button onclick="window.downloadShareImage()" class="flex-[2] py-3 rounded-2xl font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
-                <i data-lucide="download" class="w-5 h-5"></i> 下載圖片
             </button>
         </div>
     </div>
