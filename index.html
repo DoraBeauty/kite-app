@@ -4001,9 +4001,12 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                 // Use html2canvas
                 const canvas = await html2canvas(container, {
                     backgroundColor: '#0f172a', // slate-900
-                    scale: 2, // Retina
+                    scale: 3, // Higher quality
                     logging: false,
-                    useCORS: true
+                    useCORS: true,
+                    // Fix mobile text sizing issues by enforcing current width
+                    width: container.scrollWidth,
+                    windowWidth: container.scrollWidth
                 });
 
                 const link = document.createElement('a');
