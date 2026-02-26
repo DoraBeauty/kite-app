@@ -3956,11 +3956,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
 
             container.innerHTML = `
-                <div class="bg-slate-900 p-4 relative overflow-hidden">
-                    <!-- Background Decoration -->
-                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
-                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
-
+                <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 p-6 relative overflow-hidden">
                     <!-- Header -->
                     <div class="flex justify-between items-center mb-4 relative z-10">
                         <div>
@@ -4004,9 +4000,13 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                     scale: 3, // Higher quality
                     logging: false,
                     useCORS: true,
-                    // Fix mobile text sizing issues by enforcing current width
-                    width: container.scrollWidth,
-                    windowWidth: container.scrollWidth
+                    onclone: (doc) => {
+                        const el = doc.querySelector('.bg-gradient-to-br');
+                        if(el) {
+                            el.style.width = '420px';
+                            el.style.padding = '24px';
+                        }
+                    }
                 });
 
                 const link = document.createElement('a');
