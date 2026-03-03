@@ -114,23 +114,21 @@
                                 <button onclick="window.migrateTradesToFIFO()" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 text-amber-500">
                                     <i data-lucide="database" class="w-4 h-4 text-amber-500"></i> 資料修正 (FIFO)
                                 </button>
+                                <button onclick="togglePrivacyMode()" class="w-full px-5 py-3 text-left text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 border-b border-slate-50 dark:border-slate-800">
+                                    <i data-lucide="eye" id="privacy-icon" class="w-4 h-4 text-slate-400" style="display: none;"></i> 隱藏金額
+                                </button>
                                 <button onclick="handleLogout()" class="w-full px-5 py-4 text-left text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"><i data-lucide="log-out" class="w-4 h-4"></i> 登出帳號</button>
                             </div>
                         </div>
-                        <div>
-                            <button onclick="togglePrivacyMode()" id="privacy-mode-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
-                                <i data-lucide="eye" id="privacy-icon" class="w-5 h-5 text-slate-400" style="display: none;"></i>
-                            </button>
-                            <script>
-                                document.addEventListener("DOMContentLoaded", () => {
-                                    const icon = document.getElementById('privacy-icon');
-                                    if(icon) {
-                                        icon.setAttribute('data-lucide', window.isPrivacyMode ? 'eye-off' : 'eye');
-                                        icon.style.display = 'block';
-                                    }
-                                });
-                            </script>
-                        </div>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", () => {
+                                const icon = document.getElementById('privacy-icon');
+                                if(icon) {
+                                    icon.setAttribute('data-lucide', window.isPrivacyMode ? 'eye-off' : 'eye');
+                                    icon.style.display = 'block';
+                                }
+                            });
+                        </script>
                         <div>
                             <button onclick="toggleViewMode()" id="view-mode-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
                                 <i data-lucide="layout-grid" class="w-5 h-5 text-slate-400"></i>
