@@ -118,6 +118,20 @@
                             </div>
                         </div>
                         <div>
+                            <button onclick="togglePrivacyMode()" id="privacy-mode-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
+                                <i data-lucide="eye" id="privacy-icon" class="w-5 h-5 text-slate-400" style="display: none;"></i>
+                            </button>
+                            <script>
+                                document.addEventListener("DOMContentLoaded", () => {
+                                    const icon = document.getElementById('privacy-icon');
+                                    if(icon) {
+                                        icon.setAttribute('data-lucide', window.isPrivacyMode ? 'eye-off' : 'eye');
+                                        icon.style.display = 'block';
+                                    }
+                                });
+                            </script>
+                        </div>
+                        <div>
                             <button onclick="toggleViewMode()" id="view-mode-btn" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-800 btn-press">
                                 <i data-lucide="layout-grid" class="w-5 h-5 text-slate-400"></i>
                             </button>
@@ -3369,6 +3383,26 @@
              }
         };
 
+        // Privacy Mode State
+        window.isPrivacyMode = localStorage.getItem('kite_privacy_mode') === 'true';
+
+        window.togglePrivacyMode = () => {
+            window.isPrivacyMode = !window.isPrivacyMode;
+            localStorage.setItem('kite_privacy_mode', window.isPrivacyMode);
+
+            // Update button icon
+            const btnIcon = document.getElementById('privacy-icon');
+            if (btnIcon) {
+                btnIcon.setAttribute('data-lucide', window.isPrivacyMode ? 'eye-off' : 'eye');
+                lucide.createIcons();
+            }
+
+            // Re-render UI components that display numbers
+            if(window.updateGlobalStats) window.updateGlobalStats();
+            if(!document.getElementById('page-portfolio').classList.contains('hidden')) window.renderPortfolio();
+            if(!document.getElementById('page-history').classList.contains('hidden')) window.renderHistory();
+        };
+
         // Initialize UI
         const savedTheme = localStorage.getItem('kite_theme') || 'system';
         setTheme(savedTheme);
@@ -3524,7 +3558,7 @@
 
                         <div class="flex items-center gap-4 shrink-0">
                             <div class="text-right">
-                                <p class="text-base font-black ${pnlClass}">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
+                                <p class="text-base font-black ${window.isPrivacyMode ? 'text-slate-400' : pnlClass}">${window.isPrivacyMode ? '***' : (unPnl >= 0 ? '+' : '') + Math.round(unPnl).toLocaleString()}</p>
                                 <p class="text-[0.625rem] font-bold ${pnlClass}">${roi}%</p>
                             </div>
                             
@@ -3564,7 +3598,7 @@
                             </div>
 
                             <div class="text-right">
-                                <p class="text-2xl font-black ${pnlClass} tracking-tight">${unPnl >= 0 ? '+' : ''}${Math.round(unPnl).toLocaleString()}</p>
+                                <p class="text-2xl font-black ${window.isPrivacyMode ? 'text-slate-400' : pnlClass} tracking-tight">${window.isPrivacyMode ? '***' : (unPnl >= 0 ? '+' : '') + Math.round(unPnl).toLocaleString()}</p>
                                 <p class="text-xs font-bold ${pnlClass} mb-1">${roi}%</p>
                             </div>
                         </div>
@@ -3572,14 +3606,14 @@
                         <div class="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-3 relative z-10">
                             <div class="text-left">
                                 <p class="text-[0.625rem] text-slate-300 dark:text-slate-600 font-bold uppercase">成本 / 股數</p>
-                                <p class="text-xs font-black text-slate-600 dark:text-slate-400">$${t.averagePrice.toFixed(1)} <span class="text-slate-300">|</span> ${t.totalQuantity}股</p>
+                                <p class="text-xs font-black text-slate-600 dark:text-slate-400">${window.isPrivacyMode ? '$*** | ***' : '$' + t.averagePrice.toFixed(1) + ' | ' + t.totalQuantity}股</p>
                             </div>
                             <div class="text-right">
                                 <div class="flex items-center justify-end gap-1">
                                     <p class="text-[0.5625rem] text-slate-300 dark:text-slate-600 font-bold">${updateTimeStr} 更新</p>
                                     ${isLive ? '<span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>' : ''}
                                 </div>
-                                <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 $${livePrice}</p>
+                                <p class="text-sm font-black text-slate-800 dark:text-slate-200">現價 ${window.isPrivacyMode ? '$***' : '$' + livePrice}</p>
                             </div>
                         </div>
 
@@ -3771,7 +3805,7 @@
                             </div>
 
                             <div class="text-right flex-shrink-0">
-                                <p class="text-base font-black ${pnlClass}">${sign}$${formatLargeNumber(totalPnL)}</p>
+                                <p class="text-base font-black ${window.isPrivacyMode ? 'text-slate-400' : pnlClass}">${window.isPrivacyMode ? '***' : sign + '$' + formatLargeNumber(totalPnL)}</p>
                                 <p class="text-[0.625rem] font-bold text-slate-400">(${roi}%)</p>
                             </div>
                         </div>
@@ -3796,15 +3830,15 @@
 
                                 <div class="flex items-center gap-2 text-[0.625rem] text-slate-400 font-bold">
                                     <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 flex items-center gap-1"><i data-lucide="hourglass" class="w-2.5 h-2.5"></i> ${daysHeld}天</span>
-                                    <span>費 $${totalFees.toLocaleString()}</span>
+                                    <span>費 ${window.isPrivacyMode ? '$***' : '$' + totalFees.toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
                             <div class="text-right">
-                                <p class="text-lg xs:text-xl font-black ${pnlClass}">
-                                    ${sign}$${formatLargeNumber(totalPnL)}
+                                <p class="text-lg xs:text-xl font-black ${window.isPrivacyMode ? 'text-slate-400' : pnlClass}">
+                                    ${window.isPrivacyMode ? '***' : sign + '$' + formatLargeNumber(totalPnL)}
                                     <span class="text-xs font-bold ml-0.5">(${roi}%)</span>
                                 </p>
                                 <p class="text-[0.625rem] font-bold text-slate-300 dark:text-slate-600">已實現淨利</p>
@@ -3900,28 +3934,33 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             const totalAssets = availableCash + marketValue;
 
             // 更新 Header 卡片數據
+            const isPrivacy = window.isPrivacyMode;
+
             const totalAssetsEl = document.getElementById('header-total-assets');
-            if(totalAssetsEl) totalAssetsEl.textContent = `$${formatLargeNumber(totalAssets)}`;
+            if(totalAssetsEl) totalAssetsEl.textContent = isPrivacy ? '***' : `$${formatLargeNumber(totalAssets)}`;
             
             const initCapEl = document.getElementById('header-initial-capital');
-            if(initCapEl) initCapEl.textContent = `$${formatLargeNumber(initialCapital)}`;
+            if(initCapEl) initCapEl.textContent = isPrivacy ? '***' : `$${formatLargeNumber(initialCapital)}`;
 
             const mktValEl = document.getElementById('header-market-value');
-            if(mktValEl) mktValEl.textContent = `$${formatLargeNumber(marketValue)}`;
+            if(mktValEl) mktValEl.textContent = isPrivacy ? '***' : `$${formatLargeNumber(marketValue)}`;
 
             const cashEl = document.getElementById('header-available-cash');
-            if(cashEl) cashEl.textContent = `$${formatLargeNumber(availableCash)}`;
+            if(cashEl) cashEl.textContent = isPrivacy ? '***' : `$${formatLargeNumber(availableCash)}`;
 
             // 更新 Header - 已實現損益 (受篩選影響)
             const plEl = document.getElementById('header-total-pl'); 
-            if(plEl){ plEl.textContent = `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`; plEl.className = `text-base font-black ${tPL >= 0 ? 'text-red-500' : 'text-green-600'}`; }
+            if(plEl){
+                plEl.textContent = isPrivacy ? '***' : `${tPL >= 0 ? '+' : ''}$${formatLargeNumber(tPL)}`;
+                plEl.className = `text-base font-black ${isPrivacy ? 'text-slate-400' : (tPL >= 0 ? 'text-red-500' : 'text-green-600')}`;
+            }
             
             // 更新 Header - 未實現損益
             const unPlEl = document.getElementById('header-unrealized-pl');
             const unPctEl = document.getElementById('header-unrealized-pct');
             if(unPlEl) {
-                unPlEl.textContent = `${tUnrealized >= 0 ? '+' : ''}$${formatLargeNumber(tUnrealized)}`;
-                unPlEl.className = `text-base font-black ${tUnrealized >= 0 ? 'text-red-500' : 'text-green-600'}`;
+                unPlEl.textContent = isPrivacy ? '***' : `${tUnrealized >= 0 ? '+' : ''}$${formatLargeNumber(tUnrealized)}`;
+                unPlEl.className = `text-base font-black ${isPrivacy ? 'text-slate-400' : (tUnrealized >= 0 ? 'text-red-500' : 'text-green-600')}`;
             }
             if(unPctEl) {
                 let unRoi = tOpenCost > 0 ? ((tUnrealized / tOpenCost) * 100).toFixed(1) : 0.0;
