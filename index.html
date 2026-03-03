@@ -1192,7 +1192,54 @@
         function subscribeToTrades(userId) {
             const q = query(collection(db, "users", userId, "trades"), orderBy("createdAt", "desc"));
             unsubscribe = onSnapshot(q, (snapshot) => {
-                trades = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                trades = snapshot.docs.map(doc => {
+                    const data = { id: doc.id, ...doc.data() };
+                    // FIFO Annotation Process
+                    let buyQueue = [];
+                    const sortedHistory = [...(data.history || [])].sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                    data.history = sortedHistory.map(h => {
+                        let annotatedH = { ...h };
+                        if (h.type === 'buy') {
+                            const fee = window.calculateCost(h.price, h.quantity, 'buy');
+                            const costBasisTotal = (h.price * h.quantity) + fee;
+                            annotatedH.buyFee = fee;
+                            annotatedH.costBasisTotal = costBasisTotal;
+
+                            buyQueue.push({
+                                price: h.price,
+                                quantity: h.quantity,
+                                remainingQty: h.quantity,
+                                costPerShare: costBasisTotal / h.quantity
+                            });
+                        } else if (h.type === 'sell') {
+                            const sellFee = window.calculateCost(h.price, h.quantity, 'sell');
+                            let remainingToSell = h.quantity;
+                            let totalSoldCost = 0;
+
+                            for (let lot of buyQueue) {
+                                if (remainingToSell <= 0) break;
+                                if (lot.remainingQty > 0) {
+                                    const deduct = Math.min(lot.remainingQty, remainingToSell);
+                                    totalSoldCost += (deduct * lot.costPerShare);
+                                    lot.remainingQty -= deduct;
+                                    remainingToSell -= deduct;
+                                }
+                            }
+
+                            const sellRevenue = (h.price * h.quantity) - sellFee;
+                            const realizedPnL = sellRevenue - totalSoldCost;
+
+                            annotatedH.sellFee = sellFee;
+                            annotatedH.soldCost = totalSoldCost;
+                            annotatedH.costBasis = h.quantity > 0 ? totalSoldCost / h.quantity : 0;
+                            annotatedH.realizedPnL = realizedPnL;
+                        }
+                        return annotatedH;
+                    });
+
+                    return data;
+                });
                 window.trades = trades;
                 renderPortfolio();
                 renderHistory();
@@ -1866,19 +1913,13 @@
                 const idx = h.originalIndex;
 
                 if(h.type === 'buy') { 
-                    // 買入時，總成本包含手續費
-                    const buyFee = window.calculateCost(h.price, h.quantity, 'buy');
-                    const buyCost = (h.price * h.quantity) + buyFee;
-                    currentCost += buyCost; 
-                    currentQty += h.quantity; 
-                    avgPrice = currentCost / currentQty; 
+                    const buyFee = h.buyFee !== undefined ? h.buyFee : window.calculateCost(h.price, h.quantity, 'buy');
                     feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400"><span class="font-bold">手續費:</span> <span class="font-black">$${buyFee.toLocaleString()}</span></div>`;
                 } else if(h.type === 'sell') { 
-                    // Prioritize snapshot cost (FIFO logic) or fallback to calculated
-                    const costBasis = h.averagePrice !== undefined ? h.averagePrice : avgPrice;
-                    let cost = costBasis * h.quantity;
-                    const sellFee = window.calculateCost(h.price, h.quantity, 'sell');
-                    let realizedPnL = window.calculateNetPnL(costBasis, h.price, h.quantity);
+                    const costBasis = h.costBasis !== undefined ? h.costBasis : (h.averagePrice || t.averagePrice);
+                    let cost = h.soldCost !== undefined ? h.soldCost : (costBasis * h.quantity);
+                    const sellFee = h.sellFee !== undefined ? h.sellFee : window.calculateCost(h.price, h.quantity, 'sell');
+                    let realizedPnL = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(costBasis, h.price, h.quantity);
                     let pct = cost > 0 ? ((realizedPnL / cost) * 100).toFixed(1) : 0; 
                     const pnlClass = realizedPnL >= 0 ? 'text-red-500' : 'text-green-600'; 
                     feeDisplay = `<div class="mt-1.5 text-[0.625rem] text-slate-500 dark:text-slate-400">
@@ -1889,8 +1930,6 @@
                         </div>
                     </div>`;
                     pnlDisplay = `<div class="mt-2 pt-2 border-t dark:border-slate-700 flex justify-between items-center text-xs font-bold ${pnlClass}"><span>淨損益: ${realizedPnL >= 0 ? '+' : ''}$${Math.round(realizedPnL).toLocaleString()} (${pct}%)</span></div>`; 
-                    currentCost -= avgPrice * h.quantity; 
-                    currentQty -= h.quantity; 
                 }
                 
                 const imageHtml = h.screenshot 
@@ -2662,7 +2701,7 @@
                     let tradePnL = 0;
                     t.history.forEach(h => {
                         if(h.type === 'sell') {
-                            tradePnL += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                            tradePnL += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         }
                     });
 
@@ -2674,7 +2713,7 @@
                 // Daily/Monthly PnL (Per Sell Event)
                 t.history.forEach(h => {
                     if(h.type === 'sell') {
-                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                        const pnl = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         const date = h.date;
                         const month = date.substring(0, 7); // YYYY-MM
 
@@ -2719,7 +2758,7 @@
 
             closedTrades.forEach(t => {
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 if(pnl > 0) {
                     currentWinStreak++;
@@ -2789,7 +2828,7 @@
                      } else {
                          // calculateCost returns fee + tax for sell
                          fee = window.calculateCost(h.price, h.quantity, 'sell');
-                         pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                         pnl = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                      }
 
                      rows.push([
@@ -2837,7 +2876,7 @@
             closedTrades.forEach(t => {
                 let pnl = 0;
                 let exitWind = t.exitWind || '無風';
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                 
                 if (personaStats[t.persona] !== undefined) personaStats[t.persona] += pnl;
                 if (windStats[exitWind] !== undefined) windStats[exitWind] += pnl;
@@ -2963,7 +3002,7 @@
                 let wins = 0;
                 slice.forEach(t => {
                     let pnl = 0;
-                    t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                    t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                     if(pnl > 0) wins++;
                 });
                 labels.push(sorted[i].exitDate ? sorted[i].exitDate.substring(5) : '-');
@@ -3025,7 +3064,7 @@
                 const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
 
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 for(const k in buckets) {
                     if(days >= buckets[k].min && days <= buckets[k].max) {
@@ -3068,7 +3107,7 @@
                 if(!t.mistakeTags || t.mistakeTags.length === 0) return;
 
                 let pnl = 0;
-                t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
 
                 t.mistakeTags.forEach(tag => {
                     if(!stats[tag]) stats[tag] = { count: 0, pnl: 0 };
@@ -3118,7 +3157,7 @@
                     let winCount = 0;
                     tradesInCell.forEach(t => {
                         let pnl = 0;
-                        t.history.forEach(h => { if(h.type === 'sell') pnl += window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
+                        t.history.forEach(h => { if(h.type === 'sell') pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity); });
                         cellPnl += pnl;
                         if(pnl > 0) winCount++;
                     });
@@ -3153,7 +3192,7 @@
             trades.forEach(t => {
                 t.history.forEach(h => {
                     if (h.type === 'sell') {
-                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                        const pnl = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         allHistory.push({ date: h.date, pnl: pnl });
                     }
                 });
@@ -3742,12 +3781,17 @@
 
                 t.history.forEach(h => {
                     if(h.type === 'sell') {
-                        const costBasis = h.averagePrice || t.averagePrice;
-                        totalPnL += window.calculateNetPnL(costBasis, h.price, h.quantity);
-                        totalFees += window.calculateCost(h.price, h.quantity, 'sell');
-                        totalCost += (costBasis * h.quantity);
+                        const realizedPnL = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                        const sellFee = h.sellFee !== undefined ? h.sellFee : window.calculateCost(h.price, h.quantity, 'sell');
+                        const costBasis = h.costBasis !== undefined ? h.costBasis : (h.averagePrice || t.averagePrice);
+                        const soldCost = h.soldCost !== undefined ? h.soldCost : (costBasis * h.quantity);
+
+                        totalPnL += realizedPnL;
+                        totalFees += sellFee;
+                        totalCost += soldCost;
                     } else if(h.type === 'buy') {
-                        totalFees += window.calculateCost(h.price, h.quantity, 'buy');
+                        const buyFee = h.buyFee !== undefined ? h.buyFee : window.calculateCost(h.price, h.quantity, 'buy');
+                        totalFees += buyFee;
                     }
                 });
 
@@ -3892,7 +3936,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
             trades.forEach(t => {
                 t.history.forEach(h => {
                     if(h.type === 'sell'){
-                        const pnl = window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
+                        const pnl = h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(h.averagePrice || t.averagePrice, h.price, h.quantity);
                         
                         // 1. 累計全時段損益 (算現金用)
                         allTimePL += pnl;
@@ -3907,7 +3951,7 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                         totalBuyFee += bFee; totalSellFee += sFee; totalTax += tax;
 
                         // 計算損益
-                        let cost = (t.averagePrice * h.quantity);
+                        let cost = h.soldCost !== undefined ? h.soldCost : (t.averagePrice * h.quantity);
                         tPL += pnl; tCost += cost;
                         if(pnl > 0) winCount++; closedCount++;
                     }
@@ -4093,8 +4137,8 @@ window.showStatsModal = () => document.getElementById('statsModal').classList.re
                     t.history.forEach(h => {
                         if(h.type === 'sell') {
                             const basis = h.averagePrice || t.averagePrice;
-                            pnl += window.calculateNetPnL(basis, h.price, h.quantity);
-                            cost += (basis * h.quantity);
+                            pnl += h.realizedPnL !== undefined ? h.realizedPnL : window.calculateNetPnL(basis, h.price, h.quantity);
+                            cost += h.soldCost !== undefined ? h.soldCost : (basis * h.quantity);
                         }
                     });
                     totalPnl += pnl;
